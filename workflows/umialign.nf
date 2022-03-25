@@ -11,7 +11,11 @@ WorkflowUmialign.initialise(params, log)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.fasta ]
+def checkPathParamList = [  params.input,
+                            params.multiqc_config,
+                            params.fasta
+                        ]
+
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
@@ -46,10 +50,12 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { FASTQC                      } from '../modules/nf-core/modules/fastqc/main'
-include { MULTIQC                     } from '../modules/nf-core/modules/multiqc/main'
-include { CAT_FASTQ                   } from '../modules/nf-core/modules/cat/fastq/main'
-include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
+include { FASTQC                           } from '../modules/nf-core/modules/fastqc/main'
+include { MULTIQC                          } from '../modules/nf-core/modules/multiqc/main'
+include { CAT_FASTQ                        } from '../modules/nf-core/modules/cat/fastq/main'
+include { FGBIO_FASTQTOBAM                 } from '../modules/nf-core/modules/fgbio/fastqtobam/main'
+include { PICARD_ESTIMATELIBRARYCOMPLEXITY } from '../modules/nf-core/modules/picard/estimatelibrarycomplexity/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS      } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -75,7 +81,6 @@ workflow UMIALIGN {
                 meta.id = meta.id.split('_')[0..-2].join('_')
                 [ meta, fastq ] }
     .groupTuple(by: [0])
-    .view()
     .branch {
         meta, fastq ->
             single : fastq.size() == 1
@@ -85,9 +90,11 @@ workflow UMIALIGN {
     }
     .set { ch_fastq }
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+
     //
     // MODULE: Concatenate FastQ files from same sample if required
     //
+
     CAT_FASTQ (
         ch_fastq.multiple
     )
@@ -99,6 +106,7 @@ workflow UMIALIGN {
     //
     // MODULE: Run FastQC
     //
+
     FASTQC (
         INPUT_CHECK.out.reads
     )
@@ -108,10 +116,15 @@ workflow UMIALIGN {
     // MODULE: fastq to bam
     //
 
-    //FGBIO_FASTQTOBAM (
-    //    INPUT_CHECK.out.reads
-    //)
-    //ch_versions = ch_versions.mix(FGBIO_FASTQTOBAM.out.versions.first())
+    FGBIO_FASTQTOBAM (
+        ch_cat_fastq,
+        params.read_structure
+    )
+    ch_versions = ch_versions.mix(FGBIO_FASTQTOBAM.out.versions.first())
+
+    PICARD_ESTIMATELIBRARYCOMPLEXITY {
+        FGBIO_FASTQTOBAM.out.umibam
+    }
 
     //CUSTOM_DUMPSOFTWAREVERSIONS (
     //    ch_versions.unique().collectFile(name: 'collated_versions.yml')

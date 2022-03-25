@@ -1,7 +1,6 @@
 process FASTQC {
     tag "$meta.id"
     label 'process_medium'
-    echo true
 
     conda (params.enable_conda ? "bioconda::fastqc=0.11.9" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -41,8 +40,6 @@ process FASTQC {
     [ ! -f  ${prefix}_1.fastq.gz ] && ln -s ${reads[0]} ${prefix}_1.fastq.gz
     [ ! -f  ${prefix}_2.fastq.gz ] && ln -s ${reads[1]} ${prefix}_2.fastq.gz
     [ ! -f  ${prefix}_3.fastq.gz ] && ln -s ${reads[2]} ${prefix}_3.fastq.gz
-    echo $args
-    echo $task.cpus
     touch ${prefix}.html
     touch ${prefix}.zip
     touch versions.yml
