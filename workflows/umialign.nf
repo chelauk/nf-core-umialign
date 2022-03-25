@@ -55,6 +55,7 @@ include { MULTIQC                          } from '../modules/nf-core/modules/mu
 include { CAT_FASTQ                        } from '../modules/nf-core/modules/cat/fastq/main'
 include { FGBIO_FASTQTOBAM                 } from '../modules/nf-core/modules/fgbio/fastqtobam/main'
 include { PICARD_ESTIMATELIBRARYCOMPLEXITY } from '../modules/nf-core/modules/picard/estimatelibrarycomplexity/main'
+include { PICARD_MARKADAPTERS              } from '../modules/nf-core/modules/picard/markadapters/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS      } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
 /*
@@ -122,16 +123,32 @@ workflow UMIALIGN {
     )
     ch_versions = ch_versions.mix(FGBIO_FASTQTOBAM.out.versions.first())
 
+    //
+    // MODULE: library complexity
+    //
+
     PICARD_ESTIMATELIBRARYCOMPLEXITY {
         FGBIO_FASTQTOBAM.out.umibam
     }
+    ch_versions = ch_versions.mix(PICARD_ESTIMATELIBRARYCOMPLEXITY.out.versions.first())
+
+    //
+    // MODULE: Mark Illumina Adapters
+    //
+
+    PICARD_MARKADAPTERS {
+        FGBIO_FASTQTOBAM.out.umibam
+    }
+    ch_versions = ch_versions.mix(PICARD_MARKADAPTERS.out.versions.first())
 
     //CUSTOM_DUMPSOFTWAREVERSIONS (
     //    ch_versions.unique().collectFile(name: 'collated_versions.yml')
     //)
+
     //
     // MODULE: MultiQC
     //
+
     workflow_summary    = WorkflowUmialign.paramsSummaryMultiqc(workflow, summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
