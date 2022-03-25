@@ -3,14 +3,44 @@
     "homePage": "https://github.com/nf-core/umialign",
     "repos": {
         "nf-core/modules": {
+            "bwa/mem": {
+                "git_sha": "950700bcdc0e9a2b6883d40d2c51c6fc435cd714"
+            },
             "custom/dumpsoftwareversions": {
                 "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
             },
             "fastqc": {
                 "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
             },
+            "fgbio/callmolecularconsensusreads": {
+                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+            },
+            "fgbio/fastqtobam": {
+                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+            },
+            "fgbio/groupreadsbyumi": {
+                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+            },
             "multiqc": {
                 "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+            },
+            "picard/collecthsmetrics": {
+                "git_sha": "e20e57f90b6787ac9a010a980cf6ea98bd990046"
+            },
+            "picard/collectmultiplemetrics": {
+                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+            },
+            "picard/markduplicates": {
+                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+            },
+            "picard/mergesamfiles": {
+                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+            },
+            "picard/sortsam": {
+                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+            },
+            "picard/sortvcf": {
+                "git_sha": "f0800157544a82ae222931764483331a81812012"
             }
         }
     }

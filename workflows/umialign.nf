@@ -48,6 +48,7 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 //
 include { FASTQC                      } from '../modules/nf-core/modules/fastqc/main'
 include { MULTIQC                     } from '../modules/nf-core/modules/multiqc/main'
+include { CAT_FASTQ                   } from '../modules/nf-core/modules/cat/fastq/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
 /*
@@ -69,7 +70,31 @@ workflow UMIALIGN {
     INPUT_CHECK (
         ch_input
     )
+    .reads
+    .map { meta, fastq ->
+                meta.id = meta.id.split('_')[0..-2].join('_')
+                [ meta, fastq ] }
+    .groupTuple(by: [0])
+    .view()
+    .branch {
+        meta, fastq ->
+            single : fastq.size() == 1
+                return [ meta, fastq.flatten() ]
+            multiple: fastq.size() > 1
+                return [ meta, fastq.flatten() ]
+    }
+    .set { ch_fastq }
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+    //
+    // MODULE: Concatenate FastQ files from same sample if required
+    //
+    CAT_FASTQ (
+        ch_fastq.multiple
+    )
+    .reads
+    .mix(ch_fastq.single)
+    .set { ch_cat_fastq }
+    ch_versions = ch_versions.mix(CAT_FASTQ.out.versions.first().ifEmpty(null))
 
     //
     // MODULE: Run FastQC
@@ -79,10 +104,18 @@ workflow UMIALIGN {
     )
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
-    CUSTOM_DUMPSOFTWAREVERSIONS (
-        ch_versions.unique().collectFile(name: 'collated_versions.yml')
-    )
+    //
+    // MODULE: fastq to bam
+    //
 
+    //FGBIO_FASTQTOBAM (
+    //    INPUT_CHECK.out.reads
+    //)
+    //ch_versions = ch_versions.mix(FGBIO_FASTQTOBAM.out.versions.first())
+
+    //CUSTOM_DUMPSOFTWAREVERSIONS (
+    //    ch_versions.unique().collectFile(name: 'collated_versions.yml')
+    //)
     //
     // MODULE: MultiQC
     //
@@ -93,8 +126,8 @@ workflow UMIALIGN {
     ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-    ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
+    //ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
+    //ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
 
     MULTIQC (
         ch_multiqc_files.collect()
