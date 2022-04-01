@@ -1,4 +1,4 @@
-process PICARD_MARKDUPLICATES {
+process PICARD_BAMTOFASTQ {
     tag "$meta.id"
     label 'process_medium'
 
@@ -11,9 +11,7 @@ process PICARD_MARKDUPLICATES {
     tuple val(meta), path(bam)
 
     output:
-    tuple val(meta), path("*.bam")        , emit: bam
-    tuple val(meta), path("*.bai")        , optional:true, emit: bai
-    tuple val(meta), path("*.metrics.txt"), emit: metrics
+    tuple val(meta), path("*.fastq.gz")   , emit: fastq
     path  "versions.yml"                  , emit: versions
 
     when:
@@ -21,6 +19,7 @@ process PICARD_MARKDUPLICATES {
 
     script:
     def args = task.ext.args ?: ''
+    def max_records = task.memory.toGiga() * 100000
     def prefix = task.ext.prefix ?: "${meta.id}"
     def avail_mem = 3
     if (!task.memory) {
@@ -29,17 +28,29 @@ process PICARD_MARKDUPLICATES {
         avail_mem = task.memory.giga
     }
     """
+    [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
     picard \\
         -Xmx${avail_mem}g \\
-        MarkDuplicates \\
+        SamToFastq \\
+        MAX_RECORDS_IN_RAM=${max_records} \\
+        TMP_DIR=./tmpdir \\
         $args \\
         I=$bam \\
-        O=${prefix}.bam \\
-        M=${prefix}.MarkDuplicates.metrics.txt
+        FASTQ=${prefix}.fastq.gz \\
+        CLIPPING_ATTRIBUTE=XT \\
+        CLIPPING_ACTION=2 \\
+        INTERLEAVE=true \\
+        NON_PF=true
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         picard: \$(echo \$(picard MarkDuplicates --version 2>&1) | grep -o 'Version:.*' | cut -f2- -d:)
     END_VERSIONS
+    """
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}.fastq.gz
+    touch versions.yml
     """
 }

@@ -29,7 +29,7 @@ process CAT_FASTQ {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        cat: \$(echo \$(cat --version 2>&1) | sed 's/^.*coreutils) //; s/ .*\$//')
+        cat:
     END_VERSIONS
     """
 }

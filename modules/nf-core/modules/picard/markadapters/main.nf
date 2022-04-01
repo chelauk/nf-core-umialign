@@ -13,7 +13,7 @@ process PICARD_MARKADAPTERS {
     output:
     tuple val(meta), path("*.bam")        , emit: bam
     tuple val(meta), path("*.bai")        , optional:true, emit: bai
-    tuple val(meta), path("*.metrics.txt"), emit: metrics
+    tuple val(meta), path("*.metrics")    , emit: metrics
     path  "versions.yml"                  , emit: versions
 
     when:
@@ -37,7 +37,7 @@ process PICARD_MARKADAPTERS {
         $args \\
         I=$bam \\
         O=${prefix}_adapters_marked.bam \\
-        M=${prefix}_markadapter.metrics.txt
+        M=${prefix}_markadapter.metrics
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -50,7 +50,7 @@ process PICARD_MARKADAPTERS {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     touch ${prefix}_unaln_umi_marked.bam
-    touch ${prefix}_mark_adapter.metrics.txt
+    touch ${prefix}_mark_adapter.metrics
     touch versions.yml
     """
 }

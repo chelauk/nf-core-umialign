@@ -9,7 +9,6 @@ process FGBIO_GROUPREADSBYUMI {
 
     input:
     tuple val(meta), path(taggedbam)
-    val(strategy)
 
     output:
     tuple val(meta), path("*_umi-grouped.bam")  , emit: bam
@@ -22,14 +21,11 @@ process FGBIO_GROUPREADSBYUMI {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-
     """
     mkdir tmp
-
     fgbio \\
         --tmp-dir=${PWD}/tmp \\
         GroupReadsByUmi \\
-        -s $strategy \\
         $args \\
         -i $taggedbam \\
         -o ${prefix}_umi-grouped.bam \\
@@ -39,5 +35,14 @@ process FGBIO_GROUPREADSBYUMI {
     "${task.process}":
         fgbio: \$( echo \$(fgbio --version 2>&1 | tr -d '[:cntrl:]' ) | sed -e 's/^.*Version: //;s/\\[.*\$//')
     END_VERSIONS
+    """
+    stub:
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    echo $args > args.txt
+    touch ${prefix}_umi-grouped.bam
+    touch ${prefix}_umi_histogram.txt
+    touch versions.yml
     """
 }

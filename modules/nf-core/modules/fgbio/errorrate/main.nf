@@ -1,4 +1,4 @@
-process FGBIO_CALLMOLECULARCONSENSUSREADS {
+process FGBIO_ERROR_RATE {
     tag "$meta.id"
     label 'process_medium'
 
@@ -9,10 +9,15 @@ process FGBIO_CALLMOLECULARCONSENSUSREADS {
 
     input:
     tuple val(meta), path(bam)
+    path interval_list
+    path fasta
+    path dict
+    path dbsnp
+    path dbsnp_tbi
 
     output:
-    tuple val(meta), path("*.bam"), emit: bam
-    path  "versions.yml"          , emit: versions
+    tuple val(meta), path("*error_rate.txt"), emit: error_rate
+    path  "versions.yml"                    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -21,14 +26,13 @@ process FGBIO_CALLMOLECULARCONSENSUSREADS {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    fgbio \\
-        CallMolecularConsensusReads \\
-        -i $bam \\
-        --min-reads 1 \\
-        --min-input-base-quality 30 \\
-        --tag MI \\
-        $args \\
-        -o ${prefix}.bam
+    fgbio -Xmx${task.memory.toGiga()}g \\
+        ErrorRateByReadPosition \\
+        -input $bam \\
+        --variants $dbsnp \\
+        --intervals $interval_list \\
+        --ref $fasta \\
+        --output ${prefix}_${args}_error_rate.txt 
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -36,10 +40,10 @@ process FGBIO_CALLMOLECULARCONSENSUSREADS {
     END_VERSIONS
     """
     stub:
+    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.bam
+    touch  ${prefix}_${args}_error_rate.txt
     touch versions.yml
     """
-
 }

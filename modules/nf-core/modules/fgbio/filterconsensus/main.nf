@@ -1,4 +1,4 @@
-process FGBIO_CALLMOLECULARCONSENSUSREADS {
+process FGBIO_FILTERCONSENSUSREADS {
     tag "$meta.id"
     label 'process_medium'
 
@@ -9,6 +9,7 @@ process FGBIO_CALLMOLECULARCONSENSUSREADS {
 
     input:
     tuple val(meta), path(bam)
+    path fasta
 
     output:
     tuple val(meta), path("*.bam"), emit: bam
@@ -22,13 +23,15 @@ process FGBIO_CALLMOLECULARCONSENSUSREADS {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     fgbio \\
-        CallMolecularConsensusReads \\
+        FilterConsensusReads \\
         -i $bam \\
-        --min-reads 1 \\
-        --min-input-base-quality 30 \\
-        --tag MI \\
         $args \\
-        -o ${prefix}.bam
+        --min-input-base-quality 30 \\
+        --mean-read-error-rate 0.05 \\
+        --max-base-error-rate 0.1 \\
+        --max-no-call-function 0.1 \\
+        --reverse-per-base-tags true
+        -o ${prefix}_filt.bam
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -37,8 +40,10 @@ process FGBIO_CALLMOLECULARCONSENSUSREADS {
     """
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def args = task.ext.args ?: ''
     """
-    touch ${prefix}.bam
+    touch ${prefix}_filt.bam
+    echo $args > args.txt
     touch versions.yml
     """
 

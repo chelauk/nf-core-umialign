@@ -41,6 +41,9 @@
             },
             "picard/sortvcf": {
                 "git_sha": "f0800157544a82ae222931764483331a81812012"
+            },
+            "qualimap/bamqc": {
+                "git_sha": "49b18b1639f4f7104187058866a8fab33332bdfe"
             }
         }
     }

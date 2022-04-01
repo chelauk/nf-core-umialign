@@ -40,8 +40,12 @@ process FASTQC {
     [ ! -f  ${prefix}_1.fastq.gz ] && ln -s ${reads[0]} ${prefix}_1.fastq.gz
     [ ! -f  ${prefix}_2.fastq.gz ] && ln -s ${reads[1]} ${prefix}_2.fastq.gz
     [ ! -f  ${prefix}_3.fastq.gz ] && ln -s ${reads[2]} ${prefix}_3.fastq.gz
-    touch ${prefix}.html
-    touch ${prefix}.zip
+    touch ${prefix}_1.html
+    touch ${prefix}_2.html
+    touch ${prefix}_3.html
+    touch ${prefix}_1.zip
+    touch ${prefix}_2.zip
+    touch ${prefix}_3.zip
     touch versions.yml
     """
 }
