@@ -1,6 +1,6 @@
 process PICARD_BED_TO_INTERVAL_LIST {
     tag "interval_list"
-    label 'process_medium'
+    label 'process_low'
 
     conda (params.enable_conda ? "bioconda::picard=2.26.10" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -33,7 +33,7 @@ process PICARD_BED_TO_INTERVAL_LIST {
         BedToIntervalList \\
         --INPUT $target_bed \\
         --SEQUENCE_DICTIONARY $dict \\
-        --OUTPUT interval_list
+        --OUTPUT interval.list
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

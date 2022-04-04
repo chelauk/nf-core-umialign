@@ -33,8 +33,8 @@ process PICARD_MERGEBAMALIGNMENT {
     picard \\
         -Xmx${avail_mem}g \\
         MergeBamAlignment \\
-        MAX_RECORDS_IN_RAM=${max_records}
-        R=${fasta}
+        MAX_RECORDS_IN_RAM=${max_records} \\
+        R=${fasta} \\
         $args \\
         UNMAPPED_BAM=${unaligned_marked_bam} \\
         ALIGNED_BAM=${aligned_unmarked_bam} \\

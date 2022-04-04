@@ -28,6 +28,7 @@ process FGBIO_FASTQTOBAM {
         --tmp-dir=${PWD}/tmp \\
         FastqToBam \\
         -i $reads \\
+		--sort true \\
         -o "${prefix}_umi_converted.bam" \\
         --read-structures $read_structure \\
         --sample $meta.id \\
