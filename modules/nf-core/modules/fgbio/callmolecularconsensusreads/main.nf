@@ -39,7 +39,10 @@ process FGBIO_CALLMOLECULARCONSENSUSREADS {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     touch ${prefix}.bam
-    touch versions.yml
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        fgbio: 1.3 
+    END_VERSIONS
     """
 
 }

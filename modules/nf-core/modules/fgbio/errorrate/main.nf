@@ -44,6 +44,9 @@ process FGBIO_ERROR_RATE {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     touch  ${prefix}_${args}_error_rate.txt
-    touch versions.yml
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        fgbio: 1.3 
+    END_VERSIONS
     """
 }

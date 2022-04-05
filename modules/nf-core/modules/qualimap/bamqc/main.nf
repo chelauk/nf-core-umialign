@@ -115,6 +115,9 @@ process QUALIMAP_BAMQC {
     touch qualimapReport.html
     cd ../
 
-    touch versions.yml
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        qualimap: 2.2.2 
+    END_VERSIONS
     """
 }

@@ -51,6 +51,9 @@ process PICARD_BAMTOFASTQ {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     touch ${prefix}.fastq.gz
-    touch versions.yml
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        picard: 2.26.10 
+    END_VERSIONS
     """
 }

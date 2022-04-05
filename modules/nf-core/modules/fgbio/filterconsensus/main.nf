@@ -12,7 +12,7 @@ process FGBIO_FILTERCONSENSUSREADS {
     path fasta
 
     output:
-    tuple val(meta), path("*.bam"), emit: bam
+    tuple val(meta), path("*_filt.bam"), emit: bam
     path  "versions.yml"          , emit: versions
 
     when:
@@ -44,7 +44,10 @@ process FGBIO_FILTERCONSENSUSREADS {
     """
     touch ${prefix}_filt.bam
     echo $args > args.txt
-    touch versions.yml
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        fgbio: 1.3 
+    END_VERSIONS
     """
 
 }

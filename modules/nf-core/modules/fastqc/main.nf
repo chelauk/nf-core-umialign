@@ -1,5 +1,5 @@
 process FASTQC {
-    tag "$meta.id"
+    tag "fastqc"
     label 'process_medium'
 
     conda (params.enable_conda ? "bioconda::fastqc=0.11.9" : null)
@@ -21,11 +21,12 @@ process FASTQC {
     script:
     def args = task.ext.args ?: ''
     // Add soft-links to original FastQs for consistent naming in pipeline
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.patient}_${meta.sample}_${meta.lane}"
     """
     [ ! -f  ${prefix}_1.fastq.gz ] && ln -s ${reads[0]} ${prefix}_1.fastq.gz
     [ ! -f  ${prefix}_2.fastq.gz ] && ln -s ${reads[1]} ${prefix}_2.fastq.gz
-    fastqc $args --threads $task.cpus ${prefix}_1.fastq.gz ${prefix}_2.fastq.gz
+    [ ! -f  ${prefix}_3.fastq.gz ] && ln -s ${reads[2]} ${prefix}_3.fastq.gz
+    fastqc $args --threads $task.cpus ${prefix}_1.fastq.gz ${prefix}_2.fastq.gz ${prefix}_2.fastq.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -35,7 +36,7 @@ process FASTQC {
     stub:
     def args = task.ext.args ?: ''
     // Add soft-links for consistent naming
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.patient}_${meta.sample}_${meta.lane}"
     """
     [ ! -f  ${prefix}_1.fastq.gz ] && ln -s ${reads[0]} ${prefix}_1.fastq.gz
     [ ! -f  ${prefix}_2.fastq.gz ] && ln -s ${reads[1]} ${prefix}_2.fastq.gz
@@ -46,6 +47,9 @@ process FASTQC {
     touch ${prefix}_1.zip
     touch ${prefix}_2.zip
     touch ${prefix}_3.zip
-    touch versions.yml
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        fastqc: 0.11.9
+    END_VERSIONS
     """
 }

@@ -43,6 +43,9 @@ process PICARD_BED_TO_INTERVAL_LIST {
     stub:
     """
     touch interval.list
-    touch versions.yml
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        picard: 2.26.10 
+    END_VERSIONS
     """
 }

@@ -51,6 +51,9 @@ process PICARD_MARKADAPTERS {
     """
     touch ${prefix}_unaln_umi_marked.bam
     touch ${prefix}_mark_adapter.metrics
-    touch versions.yml
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        picard: 2.26.10 
+    END_VERSIONS
     """
 }

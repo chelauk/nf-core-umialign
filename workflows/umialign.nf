@@ -32,6 +32,9 @@ dbsnp_tbi   = params.fasta ? params.dbsnp_tbi   ? Channel.fromPath(params.dbsnp_
 // initialise params outside the genome scope
 target_bed  = params.target_bed    ? file(params.target_bed) : file("${params.outdir}/no_file")
 file("${params.outdir}/no_file").text = "no_file\n"
+
+if (params.input) csv_file = file(params.input)
+ch_input_sample = extract_csv(csv_file)
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     CONFIG FILES
@@ -50,8 +53,7 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK } from '../subworkflows/local/input_check'
-
+include { MERGE_RUNS  } from '../subworkflows/local/merge_runs/main'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
@@ -63,7 +65,6 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 //
 include { FASTQC                            } from '../modules/nf-core/modules/fastqc/main'
 include { MULTIQC                           } from '../modules/nf-core/modules/multiqc/main'
-include { CAT_FASTQ                         } from '../modules/nf-core/modules/cat/fastq/main'
 include { PICARD_BED_TO_INTERVAL_LIST       } from '../modules/nf-core/modules/picard/bed_to_interval/main'
 include { FGBIO_FASTQTOBAM                  } from '../modules/nf-core/modules/fgbio/fastqtobam/main'
 include { PICARD_ESTIMATELIBRARYCOMPLEXITY  } from '../modules/nf-core/modules/picard/estimatelibrarycomplexity/main'
@@ -99,39 +100,7 @@ workflow UMIALIGN {
 
     ch_versions = Channel.empty()
     ch_reports  = Channel.empty()
-
-    //
-    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
-    //
-    INPUT_CHECK (
-        ch_input
-    )
-    .reads
-    .map { meta, fastq ->
-                meta.id = meta.id.split('_')[0..-2].join('_')
-                [ meta, fastq ] }
-    .groupTuple(by: [0])
-    .branch {
-        meta, fastq ->
-            single : fastq.size() == 1
-                return [ meta, fastq.flatten() ]
-            multiple: fastq.size() > 1
-                return [ meta, fastq.flatten() ]
-    }
-    .set { ch_fastq }
-    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-
-    //
-    // MODULE: Concatenate FastQ files from same sample if required
-    //
-
-    CAT_FASTQ (
-        ch_fastq.multiple
-    )
-    .reads
-    .mix(ch_fastq.single)
-    .set { ch_cat_fastq }
-    ch_versions = ch_versions.mix(CAT_FASTQ.out.versions.first().ifEmpty(null))
+    ch_bam_st2  = Channel.empty()
 
     //
     // MODULE: Target bed to interval list
@@ -141,212 +110,232 @@ workflow UMIALIGN {
         target_bed,dict
     )
 
-    //
-    // MODULE: Run FastQC
-    //
+    if (params.stage == 'one') {
+        ch_input_sample.branch{
+            fastq: it[0].data_type == "fastq"
+            bam:   it[0].data_type == "bam"
+        }.set{ch_input_sample_type}
 
-    FASTQC (
-        ch_cat_fastq
-    )
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+        //
+        // MODULE: Run FastQC
+        //
 
-    //
-    // MODULE: fastq to bam
-    //
+        FASTQC (
+            ch_input_sample_type.fastq
+        )
+        ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
-    FGBIO_FASTQTOBAM (
-        ch_cat_fastq,
-        params.read_structure
-    )
-    ch_versions = ch_versions.mix(FGBIO_FASTQTOBAM.out.versions.first())
+        //
+        // MODULE: fastq to bam
+        //
 
-    //
-    // MODULE: library complexity
-    //
+        FGBIO_FASTQTOBAM (
+            ch_input_sample_type.fastq,
+            params.read_structure
+        )
+        ch_versions = ch_versions.mix(FGBIO_FASTQTOBAM.out.versions.first())
 
-    PICARD_ESTIMATELIBRARYCOMPLEXITY (
-        FGBIO_FASTQTOBAM.out.umibam
-    )
-    ch_versions = ch_versions.mix(PICARD_ESTIMATELIBRARYCOMPLEXITY.out.versions.first())
+        //
+        // MODULE: library complexity
+        //
 
-    //
-    // MODULE: Picard mark illumina adapters
-    //
+        PICARD_ESTIMATELIBRARYCOMPLEXITY (
+            FGBIO_FASTQTOBAM.out.umibam
+        )
+        ch_versions = ch_versions.mix(PICARD_ESTIMATELIBRARYCOMPLEXITY.out.versions.first())
 
-    PICARD_MARKADAPTERS (
-        FGBIO_FASTQTOBAM.out.umibam
-    )
-    ch_versions = ch_versions.mix(PICARD_MARKADAPTERS.out.versions.first())
+        //
+        // MODULE: Picard mark illumina adapters
+        //
 
-    //
-    // MODULE: Picard bam to fastq
-    //
+        PICARD_MARKADAPTERS (
+            FGBIO_FASTQTOBAM.out.umibam
+        )
+        ch_versions = ch_versions.mix(PICARD_MARKADAPTERS.out.versions.first())
 
-    B2FQ1 (
-        PICARD_MARKADAPTERS.out.bam
-    )
-    ch_versions = ch_versions.mix(B2FQ1.out.versions.first())
+        //
+        // MODULE: Picard bam to fastq
+        //
 
-    //
-    // MODULE: bwa align to reference
-    //
+        B2FQ1 (
+            PICARD_MARKADAPTERS.out.bam
+        )
+        ch_versions = ch_versions.mix(B2FQ1.out.versions.first())
 
-    sort = true
-    BM1 (
-        B2FQ1.out.fastq,
-        bwa,
-        sort
-    )
-    ch_versions = ch_versions.mix(BM1.out.versions.first())
+        //
+        // MODULE: bwa align to reference
+        //
 
-    //
-    // MODULE: merge adapter marked unaligned bam to aligned bam
-    //
+        sort = true
+        BM1 (
+            B2FQ1.out.fastq,
+            bwa,
+            sort
+        )
+        ch_versions = ch_versions.mix(BM1.out.versions.first())
 
-    PMB1 (
-        BM1.out.bam.join(PICARD_MARKADAPTERS.out.bam),
-        fasta,
-        dict
-    )
+        //
+        // MODULE: merge adapter marked unaligned bam to aligned bam
+        //
 
-    //
-    // MODULE : Picard collect hs metrics before collapse
-    //
+        PMB1 (
+            BM1.out.bam.join(PICARD_MARKADAPTERS.out.bam),
+            fasta,
+            dict
+        )
+        ch_versions = ch_versions.mix(PMB1.out.versions.first())
 
-    HS1 (
-        PMB1.out.bam,
-        PICARD_BED_TO_INTERVAL_LIST.out.intervals
-    )
+        //
+        // SUBWORKFLOW: merge bams if necessary
+        //
 
-    //
-    // MODULE : FGBIO collect errorates prior to collapse
-    //
+        MERGE_RUNS(PMB1.out.bam)
 
-    ER1 (
-        PMB1.out.bam,
-        PICARD_BED_TO_INTERVAL_LIST.out.intervals,
-        fasta,
-        dict,
-        dbsnp,
-        dbsnp_tbi
-    )
+        //
+        // MODULE : Picard collect hs metrics before collapse
+        //
 
-    //
-    // MODULE: FGBIO group reads by UMI
-    //
-    FGBIO_GROUPREADSBYUMI (
-        PMB1.out.bam
-    )
+        HS1 (
+            MERGE_RUNS.out.bam,
+            PICARD_BED_TO_INTERVAL_LIST.out.intervals
+        )
 
-    //
-    // MODULE: FGBIO call consensus
-    //
+        //
+        // MODULE : FGBIO collect error rates prior to collapse
+        //
 
-    FGBIO_CALLMOLECULARCONSENSUSREADS (
-        FGBIO_GROUPREADSBYUMI.out.bam
-    )
+        ER1 (
+            MERGE_RUNS.out.bam,
+            PICARD_BED_TO_INTERVAL_LIST.out.intervals,
+            fasta,
+            dict,
+            dbsnp,
+            dbsnp_tbi
+        )
 
-    //
-    // MODULE: FGBIO filter consensus reads
-    //
+        //
+        // MODULE: FGBIO group reads by UMI
+        //
 
-    FGBIO_FILTERCONSENSUSREADS (
-        FGBIO_CALLMOLECULARCONSENSUSREADS.out.bam,fasta
-    )
+        FGBIO_GROUPREADSBYUMI (
+            MERGE_RUNS.out.bam
+        )
 
-    //
-    // MODULE: Picard bam to fastq
-    //
+        //
+        // MODULE: FGBIO call consensus
+        //
 
-    B2FQ2 (
-        FGBIO_FILTERCONSENSUSREADS.out.bam
-    )
+        FGBIO_CALLMOLECULARCONSENSUSREADS (
+            FGBIO_GROUPREADSBYUMI.out.bam
+        )
 
-    //
-    // MODULE: second alignment
-    //
+        //
+        // MODULE: FGBIO filter consensus reads
+        //
 
-    BM2 (
-        B2FQ2.out.fastq,
-        bwa,
-        sort
-    )
+        FGBIO_FILTERCONSENSUSREADS (
+            FGBIO_CALLMOLECULARCONSENSUSREADS.out.bam,fasta
+        )
 
-    SAMBAMBA_SORT (
-        FGBIO_FILTERCONSENSUSREADS.out.bam
-    )
-    ch_versions = ch_versions.mix(SAMBAMBA_SORT.out.versions.first())
 
-    PMB2 (
-        BM1.out.bam.join(SAMBAMBA_SORT.out.bam),
-        fasta,
-        dict
-    )
+        if (params.stage == "two" ) {
+            ch_bam_st2 = ch_input_sample
+        }
+            ch_bam_st2 = ch_input_sample_type.bam.mix(FGBIO_FILTERCONSENSUSREADS.out.bam)
 
-    //
-    // MODULE : Picard collect hs metrics after collapse
-    //
+            //
+            // MODULE: Picard bam to fastq
+            //
+            B2FQ2 (
+                ch_bam_st2
+            )
 
-    HS2 (
-        PMB2.out.bam,
-        PICARD_BED_TO_INTERVAL_LIST.out.intervals
-    )
+            //
+            // MODULE: second alignment
+            //
 
-    //
-    // MODULE : FGBIO collect errorates after collapse
-    //
+            BM2 (
+                B2FQ2.out.fastq,
+                bwa,
+                sort
+            )
 
-    ER2 (
-        PMB2.out.bam,
-        PICARD_BED_TO_INTERVAL_LIST.out.intervals,
-        fasta,
-        dict,
-        dbsnp,
-        dbsnp_tbi
-    )
+            SAMBAMBA_SORT (
+                FGBIO_FILTERCONSENSUSREADS.out.bam
+            )
+            ch_versions = ch_versions.mix(SAMBAMBA_SORT.out.versions.first())
 
-    PICARD_UMIMARKDUPLICATES (
-        PMB2.out.bam
-    )
+            PMB2 (
+                BM2.out.bam.join(SAMBAMBA_SORT.out.bam),
+                fasta,
+                dict
+            )
 
-    QUALIMAP_BAMQC (
-        PMB2.out.bam,
-        target_bed
-    )
+            //
+            // MODULE : Picard collect hs metrics after collapse
+            //
 
-    CUSTOM_DUMPSOFTWAREVERSIONS (
-        ch_versions.unique().collectFile(name: 'collated_versions.yml')
-    )
+            HS2 (
+                PMB2.out.bam,
+                PICARD_BED_TO_INTERVAL_LIST.out.intervals
+            )
 
-    //
-    // MODULE: MultiQC
-    //
+            //
+            // MODULE : FGBIO collect error rates after collapse
+            //
 
-    workflow_summary    = WorkflowUmialign.paramsSummaryMultiqc(workflow, summary_params)
-    ch_workflow_summary = Channel.value(workflow_summary)
+            ER2 (
+                PMB2.out.bam,
+                PICARD_BED_TO_INTERVAL_LIST.out.intervals,
+                fasta,
+                dict,
+                dbsnp,
+                dbsnp_tbi
+            )
 
-    ch_multiqc_files = Channel.empty()
-    ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
-    ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-    ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(ER1.out.error_rate.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(ER2.out.error_rate.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(HS1.out.hs_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(HS2.out.hs_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(FGBIO_GROUPREADSBYUMI.out.histogram.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(PICARD_UMIMARKDUPLICATES.out.metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(QUALIMAP_BAMQC.out.results.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(PICARD_ESTIMATELIBRARYCOMPLEXITY.out.complexity_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(PICARD_MARKADAPTERS.out.metrics.collect{it[1]}.ifEmpty([]))
-    MULTIQC (
-        ch_multiqc_files.collect()
-    )
-    multiqc_report = MULTIQC.out.report.toList()
-    ch_versions    = ch_versions.mix(MULTIQC.out.versions)
+            PICARD_UMIMARKDUPLICATES (
+                PMB2.out.bam
+            )
+
+            QUALIMAP_BAMQC (
+                PMB2.out.bam,
+                target_bed
+            )
+            ch_versions = ch_versions.mix(QUALIMAP_BAMQC.out.versions.first())
+
+            CUSTOM_DUMPSOFTWAREVERSIONS (
+                ch_versions.unique().collectFile(name: 'collated_versions.yml')
+            )
+
+        //
+        // MODULE: MultiQC
+        //
+
+        workflow_summary    = WorkflowUmialign.paramsSummaryMultiqc(workflow, summary_params)
+        ch_workflow_summary = Channel.value(workflow_summary)
+
+        ch_multiqc_files = Channel.empty()
+        ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
+        ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+        ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
+        ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(ER1.out.error_rate.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(ER2.out.error_rate.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(HS1.out.hs_metrics.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(HS2.out.hs_metrics.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(FGBIO_GROUPREADSBYUMI.out.histogram.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(PICARD_UMIMARKDUPLICATES.out.metrics.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAP_BAMQC.out.results.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(PICARD_ESTIMATELIBRARYCOMPLEXITY.out.complexity_metrics.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(PICARD_MARKADAPTERS.out.metrics.collect{it[1]}.ifEmpty([]))
+        MULTIQC (
+            ch_multiqc_files.collect()
+        )
+        multiqc_report = MULTIQC.out.report.toList()
+        ch_versions    = ch_versions.mix(MULTIQC.out.versions)
+    }
 }
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     COMPLETION EMAIL AND SUMMARY
@@ -359,7 +348,126 @@ workflow.onComplete {
     }
     NfcoreTemplate.summary(workflow, params, log)
 }
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    FUNCTIONS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+// Function to extract information (meta data + file(s)) from csv file(s)
+def extract_csv(csv_file) {
+    Channel.from(csv_file).splitCsv(header: true)
+        //Retrieves number of lanes by grouping together by patient and sample and counting how many entries there are for this combination
+        .map{ row ->
+            if (!(row.patient && row.sample)) log.warn "Missing or unknown field in csv file header"
+            [[row.patient.toString(), row.sample.toString()], row]
+        }.groupTuple()
+        .map{ meta, rows ->
+            size = rows.size()
+            [rows, size]
+        }.transpose()
+        .map{ row, numLanes -> //from here do the usual thing for csv parsing
+        def meta = [:]
 
+        //TODO since it is mandatory: error/warning if not present?
+        // Meta data to identify samplesheet
+        // Both patient and sample are mandatory
+        // Several sample can belong to the same patient
+        // Sample should be unique for the patient
+        if (row.patient) meta.patient = row.patient.toString()
+        if (row.sample)  meta.sample  = row.sample.toString()
+
+        // If no gender specified, gender is not considered
+        // gender is only mandatory for somatic CNV
+        if (row.gender) meta.gender = row.gender.toString()
+        else meta.gender = "NA"
+
+        // If no status specified, sample is assumed normal
+        if (row.status) meta.status = row.status.toInteger()
+        else meta.status = 0
+
+        // mapping with fastq
+        if (row.lane && row.fastq_3) {
+            meta.patient    = row.patient.toString()
+            meta.sample     = row.sample.toString()
+            meta.lane       = row.lane.toString()
+            meta.id         = "${row.patient}-${row.sample}-${row.lane}"
+            def fastq_1     = file(row.fastq_1, checkIfExists: true)
+            def fastq_2     = file(row.fastq_2, checkIfExists: true)
+            def fastq_3     = file(row.fastq_3, checkIfExists: true)
+            def CN          = params.sequencing_center ? "CN:${params.sequencing_center}\\t" : ''
+            def read_group  = "\"@RG\\tID:${row.lane}\\t${CN}PU:${row.lane}\\tSM:${row.sample}\\tLB:${row.sample}\\tPL:ILLUMINA\""
+            meta.numLanes   = numLanes.toInteger()
+            meta.read_group = read_group.toString()
+            meta.data_type  = 'fastq'
+            return [meta, [fastq_1, fastq_2, fastq_3]]
+        // start from BAM
+        } else if (row.lane && row.bam) {
+            meta.id         = "${row.sample}-${row.lane}".toString()
+            def bam         = file(row.bam,   checkIfExists: true)
+            def CN          = params.sequencing_center ? "CN:${params.sequencing_center}\\t" : ''
+            def read_group  = "\"@RG\\tID:${row.lane}\\t${CN}PU:${row.lane}\\tSM:${row.sample}\\tLB:${row.sample}\\tPL:ILLUMINA\""
+            meta.numLanes   = numLanes.toInteger()
+            meta.read_group = read_group.toString()
+            meta.data_type  = "bam"
+            return [meta, bam]
+        // recalibration
+        } else if (row.table && row.cram) {
+            meta.id   = meta.sample
+            def cram  = file(row.cram,  checkIfExists: true)
+            def crai  = file(row.crai,  checkIfExists: true)
+            def table = file(row.table, checkIfExists: true)
+            meta.data_type  = "cram"
+            return [meta, cram, crai, table]
+        // recalibration when skipping MarkDuplicates
+        } else if (row.table && row.bam) {
+            meta.id   = meta.sample
+            def bam   = file(row.bam,   checkIfExists: true)
+            def bai   = file(row.bai,   checkIfExists: true)
+            def table = file(row.table, checkIfExists: true)
+            meta.data_type  = "bam"
+            return [meta, bam, bai, table]
+        // prepare_recalibration or variant_calling
+        } else if (row.cram) {
+            meta.id = meta.sample
+            def cram = file(row.cram, checkIfExists: true)
+            def crai = file(row.crai, checkIfExists: true)
+            meta.data_type  = "cram"
+            return [meta, cram, crai]
+        // prepare_recalibration when skipping MarkDuplicates
+        } else if (row.bam) {
+            meta.id = meta.sample
+            def bam = file(row.bam, checkIfExists: true)
+            def bai = file(row.bai, checkIfExists: true)
+            meta.data_type  = "bam"
+            return [meta, bam, bai]
+        // annotation
+        } else if (row.vcf) {
+            meta.id = meta.sample
+            def vcf = file(row.vcf, checkIfExists: true)
+            meta.data_type  = "vcf"
+            return [meta, vcf]
+        } else {
+            log.warn "Missing or unknown field in csv file header"
+        }
+    }
+}
+
+// Function to count number of intervals
+def count_intervals(intervals_file) {
+    count = 0
+
+    intervals_file.eachLine{ it ->
+        count += it.startsWith("@") ? 0 : 1
+    }
+
+    return count
+}
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    THE END
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     THE END

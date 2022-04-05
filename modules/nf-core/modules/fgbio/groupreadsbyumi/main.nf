@@ -43,6 +43,9 @@ process FGBIO_GROUPREADSBYUMI {
     echo $args > args.txt
     touch ${prefix}_umi-grouped.bam
     touch ${prefix}_umi_histogram.txt
-    touch versions.yml
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        fgbio: 1.3 
+    END_VERSIONS
     """
 }

@@ -43,9 +43,17 @@ process BWA_MEM {
     END_VERSIONS
     """
     stub:
+    def args = task.ext.args ?: ''
+    def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def read_group = meta.read_group ? "-R ${meta.read_group}" : ""
     """
+    echo "$args $read_group" > thing
     touch ${prefix}.align.bam
-    touch versions.yml
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        bwa: 0.7.17-r1188
+        samtools: 1.11
+    END_VERSIONS
     """
 }
