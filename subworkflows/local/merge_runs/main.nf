@@ -17,7 +17,7 @@ workflow MERGE_RUNS {
             .map{meta, bam ->
                 CN = params.sequencing_center ? "CN:${params.sequencing_center}\\t" : ''
                 meta.id = meta.patient + "-" + meta.sample
-                meta.read_group  = "\"@RG\\tID:${meta.id}\\t${CN}PU:1\\tSM:${meta.sample}\\tLB:${meta.sample}\\tPL:ILLUMINA\""
+                meta.read_group  = "\"@RG\\tID:1\\t${CN}PU:1\\tSM:${meta.sample}\\tLB:${meta.sample}\\tPL:ILLUMINA\""
                 [[meta.patient, meta.sample, meta.id, meta.gender, meta.status, meta.read_group],bam ]}
             .groupTuple()
             .branch{
