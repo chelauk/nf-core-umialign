@@ -20,9 +20,8 @@ process SAMBAMBA_MERGE {
     if ("$bam" == "${prefix}.bam") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
     sambamba merge  \
-        $bam \
-        --tmpdir=./temp \
         --nthreads=${task.cpus}
+        $bam \
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         sambamba: \$( echo \$(sambamba --version 2>&1 | sed 's/^.*sambamba //; s/ by.*//') 
