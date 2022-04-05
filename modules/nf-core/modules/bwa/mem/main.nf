@@ -31,7 +31,8 @@ process BWA_MEM {
     bwa mem \\
         $args \\
         $read_group \\
-        -t $task.cpus \\
+        -p \\
+		-t $task.cpus \\
         \$INDEX \\
         $reads \\
         | samtools $samtools_command $args2 --threads $task.cpus -o ${prefix}.bam -

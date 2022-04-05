@@ -21,7 +21,6 @@ process SAMBAMBA_MERGE {
     """
     sambamba merge  \
         $bam \
-        --memory-limit=${task.memory.toGiga()}G \
         --tmpdir=./temp \
         --nthreads=${task.cpus}
     cat <<-END_VERSIONS > versions.yml
