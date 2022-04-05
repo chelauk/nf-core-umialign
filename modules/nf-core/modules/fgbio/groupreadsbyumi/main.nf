@@ -24,7 +24,7 @@ process FGBIO_GROUPREADSBYUMI {
     """
     mkdir tmp
     fgbio \\
-        --tmp-dir=${PWD}/tmp \\
+        --tmp-dir=./tmp \\
         GroupReadsByUmi \\
         $args \\
         -i $taggedbam \\
