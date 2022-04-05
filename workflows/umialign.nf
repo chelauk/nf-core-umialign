@@ -396,7 +396,7 @@ def extract_csv(csv_file) {
             def fastq_2     = file(row.fastq_2, checkIfExists: true)
             def fastq_3     = file(row.fastq_3, checkIfExists: true)
             def CN          = params.sequencing_center ? "CN:${params.sequencing_center}\\t" : ''
-            def read_group  = "\"@RG\\tID:${row.lane}\\t${CN}PU:${row.lane}\\tSM:${row.sample}\\tLB:${row.sample}\\tPL:ILLUMINA\""
+            def read_group  = "\"@RG\\tID:1\\t${CN}PU:${row.lane}\\tSM:${row.sample}\\tLB:${row.sample}\\tPL:ILLUMINA\""
             meta.numLanes   = numLanes.toInteger()
             meta.read_group = read_group.toString()
             meta.data_type  = 'fastq'
