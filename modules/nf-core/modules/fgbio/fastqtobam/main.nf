@@ -12,7 +12,7 @@ process FGBIO_FASTQTOBAM {
     val read_structure
 
     output:
-    tuple val(meta), path("*_umi_converted.bam"), emit: umibam
+    tuple val(meta), path("*_unaln.bam"), emit: umibam
     path "versions.yml"                         , emit: versions
 
     when:
@@ -25,15 +25,17 @@ process FGBIO_FASTQTOBAM {
     mkdir tmp
 
     fgbio \\
+        -Xmx${task.memory.toGiga()}g \\
         --tmp-dir=${PWD}/tmp \\
         FastqToBam \\
+        $args \\
         -i $reads \\
-		--sort true \\
-        -o "${prefix}_umi_converted.bam" \\
+        --sort true \\
+        -o "${prefix}_unaln.bam" \\
         --read-structures $read_structure \\
+        --umi-tag RX \\
         --sample $meta.id \\
-        --library $meta.id \\
-        $args
+        --library $meta.id 
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
