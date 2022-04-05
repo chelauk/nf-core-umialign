@@ -15,8 +15,10 @@ workflow MERGE_RUNS {
 
         bam_bwa
             .map{meta, bam ->
+                CN = params.sequencing_center ? "CN:${params.sequencing_center}\\t" : ''
                 meta.id = meta.patient + "-" + meta.sample
-                [[meta.patient, meta.sample, meta.id, meta.gender, meta.status],bam ]}
+                meta.read_group  = "\"@RG\\tID:${meta.id}\\t${CN}PU:1\\tSM:${meta.sample}\\tLB:${meta.sample}\\tPL:ILLUMINA\""
+                [[meta.patient, meta.sample, meta.id, meta.gender, meta.status, meta.read_group],bam ]}
             .groupTuple()
             .branch{
                 single:   it[1].size() == 1
@@ -32,6 +34,7 @@ workflow MERGE_RUNS {
                                     meta.id      = info[2]
                                     meta.gender  = info[3]
                                     meta.status  = info[4]
+                                    meta.read_group = info[5]
                                     [meta,bam]
                                 }
 
@@ -44,6 +47,7 @@ workflow MERGE_RUNS {
                                     meta.id      = info[2]
                                     meta.gender  = info[3]
                                     meta.status  = info[4]
+                                    meta.read_group = info[5]
                                     [meta,bam]
                                 }
         // STEP 1.5: MERGING AND INDEXING BAM FROM MULTIPLE LANES

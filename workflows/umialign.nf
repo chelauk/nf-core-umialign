@@ -246,6 +246,7 @@ workflow UMIALIGN {
             //
             // MODULE: Picard bam to fastq
             //
+            ch_bam_st2.view()
             B2FQ2 (
                 ch_bam_st2
             )
