@@ -21,12 +21,13 @@ process SAMBAMBA_SORT {
     """
     sambamba sort  \
         $bam \
+        --sort-by-name \
         --memory-limit=${task.memory.toGiga()}G \
         --tmpdir=./temp \
         --nthreads=${task.cpus}
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        sambama: \$( echo \$(sambamba --version 2>&1 | sed 's/^.*sambamba //; s/ by.*//') 
+        sambamba: \$( echo \$(sambamba --version 2>&1 | sed 's/^.*sambamba //; s/ by.*//') 
     END_VERSIONS
     """
     stub:
