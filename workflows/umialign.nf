@@ -242,6 +242,7 @@ workflow UMIALIGN {
             ch_bam_st2 = ch_input_sample
         }
             ch_bam_st2 = ch_input_sample_type.bam.mix(FGBIO_FILTERCONSENSUSREADS.out.bam)
+            ch_bam_st2.view()
 
             //
             // MODULE: Picard bam to fastq
