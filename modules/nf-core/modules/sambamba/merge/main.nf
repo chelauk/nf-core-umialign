@@ -32,7 +32,7 @@ process SAMBAMBA_MERGE {
     def prefix = task.ext.prefix ?: "${meta.id}"
     if ("$bam" == "${prefix}.bam") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
-    touch ${prefix}.merged.bam
+    touch ${prefix}.sambamba.bam
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         sambamba: 0.8.1 

@@ -48,7 +48,7 @@ process FGBIO_FASTQTOBAM {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}_umi_converted.bam
+    touch ${prefix}_unaln.bam
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         fgbio: 1.3
