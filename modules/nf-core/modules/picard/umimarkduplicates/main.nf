@@ -31,7 +31,6 @@ process PICARD_UMIMARKDUPLICATES {
     """
     picard \\
         -Xmx${avail_mem}g \\
-
         UmiAwareMarkDuplicatesWithMateCigar \\
         --INPUT  $bam \\
         --OUTPUT ${prefix}_umi_aware_md.bam \\
