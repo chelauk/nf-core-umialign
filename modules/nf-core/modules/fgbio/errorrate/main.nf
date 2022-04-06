@@ -16,7 +16,7 @@ process FGBIO_ERROR_RATE {
     path dbsnp_tbi
 
     output:
-    tuple val(meta), path("*error_rate.txt"), emit: error_rate
+    tuple val(meta), path("*txt"), emit: error_rate
     path  "versions.yml"                    , emit: versions
 
     when:
@@ -32,7 +32,7 @@ process FGBIO_ERROR_RATE {
         --variants $dbsnp \\
         --intervals $interval_list \\
         --ref $fasta \\
-        --output ${prefix}_${args}_error_rate.txt 
+        --output ${prefix}_${args} 
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
