@@ -81,7 +81,6 @@ include { FGBIO_FILTERCONSENSUSREADS        } from '../modules/nf-core/modules/f
 include { PICARD_BAMTOFASTQ as B2FQ2        } from '../modules/nf-core/modules/picard/bamtofastq/main'
 include { BWA_MEM as BM2                    } from '../modules/nf-core/modules/bwa/mem/main'
 include { SAMBAMBA_SORT                     } from '../modules/nf-core/modules/sambamba/sort/main'
-include { SAMBAMBA_SORT as SMB_S2           } from '../modules/nf-core/modules/sambamba/sort/main'
 include { PICARD_MERGEBAMALIGNMENT as PMB2  } from '../modules/nf-core/modules/picard/mergebamalignment/main'
 include { PICARD_COLLECTHSMETRICS as HS2    } from '../modules/nf-core/modules/picard/collecthsmetrics/main'
 include { FGBIO_ERROR_RATE as ER2           } from '../modules/nf-core/modules/fgbio/errorrate/main'
@@ -263,17 +262,13 @@ workflow UMIALIGN {
                 sort
             )
 
-            SMB_S2 (
-                BM2.out.bam
-            )
-
             SAMBAMBA_SORT (
                 FGBIO_FILTERCONSENSUSREADS.out.bam
             )
             ch_versions = ch_versions.mix(SAMBAMBA_SORT.out.versions.first())
 
             PMB2 (
-                SMB_S2.out.bam.join(SAMBAMBA_SORT.out.bam),
+                BM2.out.bam.join(SAMBAMBA_SORT.out.bam),
                 fasta,
                 dict
             )
