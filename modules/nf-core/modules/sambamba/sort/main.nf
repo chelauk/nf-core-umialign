@@ -27,7 +27,7 @@ process SAMBAMBA_SORT {
         --nthreads=${task.cpus}
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        sambamba: \$( echo \$(sambamba --version 2>&1 | sed 's/^.*sambamba //; s/ by.*//') 
+        sambamba: 0.8.1 
     END_VERSIONS
     """
     stub:

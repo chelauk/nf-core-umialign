@@ -32,16 +32,16 @@ process BWA_MEM {
         $args \\
         $read_group \\
         -p \\
-		-t $task.cpus \\
+        -t $task.cpus \\
         \$INDEX \\
         $reads \\
         | samtools $samtools_command $args2 --threads $task.cpus -o ${prefix}.bam -
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        bwa: \$(echo \$(bwa 2>&1) | sed 's/^.*Version: //; s/Contact:.*\$//')
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
-    END_VERSIONS
+cat <<-END_VERSIONS > versions.yml
+"${task.process}":
+    bwa: \$(echo \$(bwa 2>&1) | sed 's/^.*Version: //; s/Contact:.*\$//')
+    samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+END_VERSIONS
     """
     stub:
     def args = task.ext.args ?: ''
