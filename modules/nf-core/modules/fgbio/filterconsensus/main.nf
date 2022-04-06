@@ -25,6 +25,7 @@ process FGBIO_FILTERCONSENSUSREADS {
     fgbio \\
         FilterConsensusReads \\
         -i $bam \\
+        --ref $fasta \\
         $args \\
         --min-base-quality 30 \\
         --max-base-error-rate 0.1 \\
