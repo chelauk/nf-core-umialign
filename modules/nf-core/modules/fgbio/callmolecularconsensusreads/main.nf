@@ -24,7 +24,6 @@ process FGBIO_CALLMOLECULARCONSENSUSREADS {
     fgbio \\
         CallMolecularConsensusReads \\
         -i $bam \\
-        --min-reads 1 \\
         --min-input-base-quality 30 \\
         --tag MI \\
         $args \\

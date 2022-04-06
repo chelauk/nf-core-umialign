@@ -26,11 +26,10 @@ process FGBIO_FILTERCONSENSUSREADS {
         FilterConsensusReads \\
         -i $bam \\
         $args \\
-        --min-input-base-quality 30 \\
-        --mean-read-error-rate 0.05 \\
+        --min-base-quality 30 \\
         --max-base-error-rate 0.1 \\
-        --max-no-call-function 0.1 \\
-        --reverse-per-base-tags true
+        --max-no-call-fraction 0.1 \\
+        --reverse-per-base-tags true \\
         -o ${prefix}_filt.bam
 
     cat <<-END_VERSIONS > versions.yml

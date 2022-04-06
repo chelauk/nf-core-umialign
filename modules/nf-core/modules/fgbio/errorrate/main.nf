@@ -28,7 +28,7 @@ process FGBIO_ERROR_RATE {
     """
     fgbio -Xmx${task.memory.toGiga()}g \\
         ErrorRateByReadPosition \\
-        -input $bam \\
+        --input $bam \\
         --variants $dbsnp \\
         --intervals $interval_list \\
         --ref $fasta \\
