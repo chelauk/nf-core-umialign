@@ -11,7 +11,7 @@ process SAMBAMBA_MERGE {
     tuple val(meta), path(bam)
 
     output:
-    tuple val(meta), path("*merged.bam"), emit: bam
+    tuple val(meta), path("*sambamba.bam"), emit: bam
     path  "versions.yml"                , emit: versions
 
     script:
@@ -21,7 +21,7 @@ process SAMBAMBA_MERGE {
     """
     sambamba merge  \\
     --nthreads=${task.cpus} \\
-    $bam 
+    ${prefix}.sambamba.bam $bam 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         sambamba: \$( echo \$(sambamba --version 2>&1 | sed 's/^.*sambamba //; s/ by.*//') 
