@@ -35,8 +35,8 @@ process FGBIO_FASTQTOBAM {
         --read-structures $read_structure \\
         --read-group-id $meta.lane \\
         --umi-tag RX \\
-        --sample $meta.id \\
-        --library $meta.id 
+        --sample ${meta.patient}_${meta.sample} \\
+        --library ${meta.patient}_${meta.sample}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
