@@ -33,6 +33,7 @@ process FGBIO_FASTQTOBAM {
         --sort true \\
         -o "${prefix}_unaln.bam" \\
         --read-structures $read_structure \\
+        --read-group-id $meta.lane
         --umi-tag RX \\
         --sample $meta.id \\
         --library $meta.id 
