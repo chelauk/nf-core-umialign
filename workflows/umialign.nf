@@ -392,7 +392,7 @@ def extract_csv(csv_file) {
             meta.patient    = row.patient.toString()
             meta.sample     = row.sample.toString()
             meta.lane       = row.lane.toString()
-            meta.id         = "${row.patient}-${row.sample}-${row.lane}"
+            meta.id         = "${row.patient}_${row.sample}_${row.lane}"
             def fastq_1     = file(row.fastq_1, checkIfExists: true)
             def fastq_2     = file(row.fastq_2, checkIfExists: true)
             def fastq_3     = file(row.fastq_3, checkIfExists: true)
@@ -404,7 +404,7 @@ def extract_csv(csv_file) {
             return [meta, [fastq_1, fastq_2, fastq_3]]
         // start from BAM
         } else if (row.lane && row.bam) {
-            meta.id         = "${row.sample}-${row.lane}".toString()
+            meta.id         = "${row.sample}_${row.lane}".toString()
             def bam         = file(row.bam,   checkIfExists: true)
             def CN          = params.sequencing_center ? "CN:${params.sequencing_center}\\t" : ''
             def read_group  = "\"@RG\\tID:${row.lane}\\t${CN}PU:${row.lane}\\tSM:${row.patient}_${row.sample}\\tLB:${row.patient}_${row.sample}\\tPL:ILLUMINA\""
