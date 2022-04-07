@@ -299,7 +299,7 @@ workflow UMIALIGN {
             )
 
             QUALIMAP_BAMQC (
-                PMB2.out.bam,
+                PICARD_UMIMARKDUPLICATES.out.bam,
                 target_bed
             )
             ch_versions = ch_versions.mix(QUALIMAP_BAMQC.out.versions.first())
