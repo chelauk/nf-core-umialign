@@ -26,14 +26,14 @@ process FGBIO_FASTQTOBAM {
 
     fgbio \\
         -Xmx${task.memory.toGiga()}g \\
-        --tmp-dir=${PWD}/tmp \\
+        --tmp-dir=./tmp \\
         FastqToBam \\
         $args \\
         -i $reads \\
         --sort true \\
         -o "${prefix}_unaln.bam" \\
         --read-structures $read_structure \\
-        --read-group-id $meta.lane \\
+        --read-group-id ${meta.patient}_${meta.sample} \\
         --umi-tag RX \\
         --sample ${meta.patient}_${meta.sample} \\
         --library ${meta.patient}_${meta.sample}
