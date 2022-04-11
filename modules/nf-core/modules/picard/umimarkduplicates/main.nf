@@ -13,7 +13,8 @@ process PICARD_UMIMARKDUPLICATES {
     output:
     tuple val(meta), path("*umi_aware_md.bam")        , emit: bam
     tuple val(meta), path("*.bai")                    , optional:true, emit: bai
-    tuple val(meta), path("*.metrics")                , emit: metrics
+    tuple val(meta), path("*umi.metrics")             , emit: umi_metrics
+    tuple val(meta), path("*duplicate.metrics")       , emit: md_metrics
     path  "versions.yml"                              , emit: versions
 
     when:

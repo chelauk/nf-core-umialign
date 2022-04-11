@@ -16,7 +16,7 @@ process FGBIO_ERROR_RATE {
     path dbsnp_tbi
 
     output:
-    tuple val(meta), path("*txt"), emit: error_rate
+    tuple val(meta), path("*txt")           , emit: error_rate
     path  "versions.yml"                    , emit: versions
 
     when:

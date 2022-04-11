@@ -23,6 +23,7 @@ process FGBIO_FILTERCONSENSUSREADS {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     fgbio \\
+        -Xmx${task.memory.toGiga()}g \\
         FilterConsensusReads \\
         -i $bam \\
         --ref $fasta \\
@@ -31,6 +32,7 @@ process FGBIO_FILTERCONSENSUSREADS {
         --max-base-error-rate 0.1 \\
         --max-no-call-fraction 0.1 \\
         --reverse-per-base-tags true \\
+        --sort-order queryname \\
         -o ${prefix}_filt.bam
 
     cat <<-END_VERSIONS > versions.yml

@@ -34,7 +34,6 @@ target_bed  = params.target_bed    ? file(params.target_bed) : file("${params.ou
 file("${params.outdir}/no_file").text = "no_file\n"
 
 if (params.input) csv_file = file(params.input)
-ch_input_sample = extract_csv(csv_file)
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     CONFIG FILES
@@ -50,42 +49,28 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-//
-// SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
-//
-include { MERGE_RUNS  } from '../subworkflows/local/merge_runs/main'
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT NF_CORE modules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+include { PICARD_BED_TO_INTERVAL_LIST       } from '../modules/nf-core/modules/picard/bed_to_interval/main'
+include { MULTIQC                           } from '../modules/nf-core/modules/multiqc/main'
+
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-//
-// MODULE: Installed directly from nf-core/modules
-//
-include { FASTQC                            } from '../modules/nf-core/modules/fastqc/main'
-include { MULTIQC                           } from '../modules/nf-core/modules/multiqc/main'
-include { PICARD_BED_TO_INTERVAL_LIST       } from '../modules/nf-core/modules/picard/bed_to_interval/main'
-include { FGBIO_FASTQTOBAM                  } from '../modules/nf-core/modules/fgbio/fastqtobam/main'
-include { PICARD_ESTIMATELIBRARYCOMPLEXITY  } from '../modules/nf-core/modules/picard/estimatelibrarycomplexity/main'
-include { PICARD_MARKADAPTERS               } from '../modules/nf-core/modules/picard/markadapters/main'
-include { PICARD_BAMTOFASTQ as B2FQ1        } from '../modules/nf-core/modules/picard/bamtofastq/main'
-include { BWA_MEM as BM1                    } from '../modules/nf-core/modules/bwa/mem/main'
-include { PICARD_MERGEBAMALIGNMENT as PMB1  } from '../modules/nf-core/modules/picard/mergebamalignment/main'
-include { PICARD_COLLECTHSMETRICS as HS1    } from '../modules/nf-core/modules/picard/collecthsmetrics/main'
-include { FGBIO_ERROR_RATE as ER1           } from '../modules/nf-core/modules/fgbio/errorrate/main'
+include { UMI_STAGE_ONE                     } from '../subworkflows/local/umi_stages/umi_st_one'
+include { UMI_STAGE_TWO                     } from '../subworkflows/local/umi_stages/umi_st_two'
+include { UMI_STAGE_THREE                   } from '../subworkflows/local/umi_stages/umi_st_three'
+
+
 include { CUSTOM_DUMPSOFTWAREVERSIONS       } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
-include { FGBIO_GROUPREADSBYUMI             } from '../modules/nf-core/modules/fgbio/groupreadsbyumi/main'
-include { FGBIO_CALLMOLECULARCONSENSUSREADS } from '../modules/nf-core/modules/fgbio/callmolecularconsensusreads/main'
-include { FGBIO_FILTERCONSENSUSREADS        } from '../modules/nf-core/modules/fgbio/filterconsensus/main'
-include { PICARD_BAMTOFASTQ as B2FQ2        } from '../modules/nf-core/modules/picard/bamtofastq/main'
-include { BWA_MEM as BM2                    } from '../modules/nf-core/modules/bwa/mem/main'
-include { SAMBAMBA_SORT                     } from '../modules/nf-core/modules/sambamba/sort/main'
-include { PICARD_MERGEBAMALIGNMENT as PMB2  } from '../modules/nf-core/modules/picard/mergebamalignment/main'
-include { PICARD_COLLECTHSMETRICS as HS2    } from '../modules/nf-core/modules/picard/collecthsmetrics/main'
-include { FGBIO_ERROR_RATE as ER2           } from '../modules/nf-core/modules/fgbio/errorrate/main'
-include { PICARD_UMIMARKDUPLICATES          } from '../modules/nf-core/modules/picard/umimarkduplicates/main'
-include { QUALIMAP_BAMQC                    } from '../modules/nf-core/modules/qualimap/bamqc/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -98,244 +83,76 @@ def multiqc_report = []
 
 workflow UMIALIGN {
 
-    ch_versions = Channel.empty()
-    ch_reports  = Channel.empty()
-    ch_bam_st2  = Channel.empty()
+    ch_versions  = Channel.empty()
+    bam_input1   = Channel.empty()
+    bam_input2   = Channel.empty()
 
-    //
-    // MODULE: Target bed to interval list
-    //
+    // MODULE create interval list with picard
 
-    PICARD_BED_TO_INTERVAL_LIST (
-        target_bed,dict
-    )
+    PICARD_BED_TO_INTERVAL_LIST (target_bed,dict)
 
-    if (params.stage == 'one') {
-        ch_input_sample.branch{
-            fastq: it[0].data_type == "fastq"
-            bam:   it[0].data_type == "bam"
-        }.set{ch_input_sample_type}
+    // SUBWORKFLOW Run from fastqs
 
-        //
-        // MODULE: Run FastQC
-        //
+    if ( params.stage == 'one' ) {
 
-        FASTQC (
-            ch_input_sample_type.fastq
-        )
-        ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    reads = extract_csv(csv_file)
+    UMI_STAGE_ONE( PICARD_BED_TO_INTERVAL_LIST.out.intervals, reads,fasta,dict,dbsnp,dbsnp_tbi,bwa )
+    ch_versions = ch_versions.mix(UMI_STAGE_ONE.out.versions.first())
 
-        //
-        // MODULE: fastq to bam
-        //
-
-        FGBIO_FASTQTOBAM (
-            ch_input_sample_type.fastq,
-            params.read_structure
-        )
-        ch_versions = ch_versions.mix(FGBIO_FASTQTOBAM.out.versions.first())
-
-        //
-        // MODULE: library complexity
-        //
-
-        PICARD_ESTIMATELIBRARYCOMPLEXITY (
-            FGBIO_FASTQTOBAM.out.umibam
-        )
-        ch_versions = ch_versions.mix(PICARD_ESTIMATELIBRARYCOMPLEXITY.out.versions.first())
-
-        //
-        // MODULE: Picard mark illumina adapters
-        //
-
-        PICARD_MARKADAPTERS (
-            FGBIO_FASTQTOBAM.out.umibam
-        )
-        ch_versions = ch_versions.mix(PICARD_MARKADAPTERS.out.versions.first())
-
-        //
-        // MODULE: Picard bam to fastq
-        //
-
-        B2FQ1 (
-            PICARD_MARKADAPTERS.out.bam
-        )
-        ch_versions = ch_versions.mix(B2FQ1.out.versions.first())
-
-        //
-        // MODULE: bwa align to reference
-        //
-
-        sort = true
-        BM1 (
-            B2FQ1.out.fastq,
-            bwa,
-            sort
-        )
-        ch_versions = ch_versions.mix(BM1.out.versions.first())
-
-        //
-        // MODULE: merge adapter marked unaligned bam to aligned bam
-        //
-
-        PMB1 (
-            BM1.out.bam.join(PICARD_MARKADAPTERS.out.bam),
-            fasta,
-            dict
-        )
-        ch_versions = ch_versions.mix(PMB1.out.versions.first())
-
-        //
-        // SUBWORKFLOW: merge bams if necessary
-        //
-
-        MERGE_RUNS(PMB1.out.bam)
-
-        //
-        // MODULE : Picard collect hs metrics before collapse
-        //
-
-        HS1 (
-            MERGE_RUNS.out.bam,
-            PICARD_BED_TO_INTERVAL_LIST.out.intervals
-        )
-
-        //
-        // MODULE : FGBIO collect error rates prior to collapse
-        //
-
-        ER1 (
-            MERGE_RUNS.out.bam,
-            PICARD_BED_TO_INTERVAL_LIST.out.intervals,
-            fasta,
-            dict,
-            dbsnp,
-            dbsnp_tbi
-        )
-
-        //
-        // MODULE: FGBIO group reads by UMI
-        //
-
-        FGBIO_GROUPREADSBYUMI (
-            MERGE_RUNS.out.bam
-        )
-
-        //
-        // MODULE: FGBIO call consensus
-        //
-
-        FGBIO_CALLMOLECULARCONSENSUSREADS (
-            FGBIO_GROUPREADSBYUMI.out.bam
-        )
-
-        //
-        // MODULE: FGBIO filter consensus reads
-        //
-
-        FGBIO_FILTERCONSENSUSREADS (
-            FGBIO_CALLMOLECULARCONSENSUSREADS.out.bam,fasta
-        )
-
-
-        if (params.stage == "two" ) {
-            ch_bam_st2 = ch_input_sample
-        }
-            ch_bam_st2 = ch_input_sample_type.bam.mix(FGBIO_FILTERCONSENSUSREADS.out.bam)
-
-            //
-            // MODULE: Picard bam to fastq
-            //
-
-            B2FQ2 (
-                ch_bam_st2
-            )
-
-            //
-            // MODULE: second alignment
-            //
-
-            BM2 (
-                B2FQ2.out.fastq,
-                bwa,
-                sort
-            )
-
-            SAMBAMBA_SORT (
-                FGBIO_FILTERCONSENSUSREADS.out.bam
-            )
-            ch_versions = ch_versions.mix(SAMBAMBA_SORT.out.versions.first())
-
-            PMB2 (
-                BM2.out.bam.join(SAMBAMBA_SORT.out.bam),
-                fasta,
-                dict
-            )
-
-            //
-            // MODULE : Picard collect hs metrics after collapse
-            //
-
-            HS2 (
-                PMB2.out.bam,
-                PICARD_BED_TO_INTERVAL_LIST.out.intervals
-            )
-
-            //
-            // MODULE : FGBIO collect error rates after collapse
-            //
-
-            ER2 (
-                PMB2.out.bam,
-                PICARD_BED_TO_INTERVAL_LIST.out.intervals,
-                fasta,
-                dict,
-                dbsnp,
-                dbsnp_tbi
-            )
-
-            PICARD_UMIMARKDUPLICATES (
-                PMB2.out.bam
-            )
-
-            QUALIMAP_BAMQC (
-                PICARD_UMIMARKDUPLICATES.out.bam,
-                target_bed
-            )
-            ch_versions = ch_versions.mix(QUALIMAP_BAMQC.out.versions.first())
-
-            CUSTOM_DUMPSOFTWAREVERSIONS (
-                ch_versions.unique().collectFile(name: 'collated_versions.yml')
-            )
-
-        //
-        // MODULE: MultiQC
-        //
-
-        workflow_summary    = WorkflowUmialign.paramsSummaryMultiqc(workflow, summary_params)
-        ch_workflow_summary = Channel.value(workflow_summary)
-
-        ch_multiqc_files = Channel.empty()
-        ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
-        ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-        ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
-        ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix(ER1.out.error_rate.collect{it[1]}.ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix(ER2.out.error_rate.collect{it[1]}.ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix(HS1.out.hs_metrics.collect{it[1]}.ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix(HS2.out.hs_metrics.collect{it[1]}.ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix(FGBIO_GROUPREADSBYUMI.out.histogram.collect{it[1]}.ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix(PICARD_UMIMARKDUPLICATES.out.metrics.collect{it[1]}.ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAP_BAMQC.out.results.collect{it[1]}.ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix(PICARD_ESTIMATELIBRARYCOMPLEXITY.out.complexity_metrics.collect{it[1]}.ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix(PICARD_MARKADAPTERS.out.metrics.collect{it[1]}.ifEmpty([]))
-        MULTIQC (
-            ch_multiqc_files.collect()
-        )
-        multiqc_report = MULTIQC.out.report.toList()
-        ch_versions    = ch_versions.mix(MULTIQC.out.versions)
     }
+
+    // MODULE: Input merged bams before group and call consensus
+
+    if ( params.stage == 'two' ) {
+        bam_input1 = extract_csv(ch_input_sample)
+    }
+
+    bam_input1 = bam_input1.mix(UMI_STAGE_ONE.out.merged_bam)
+
+    UMI_STAGE_TWO(bam_input1)
+    ch_versions = ch_versions.mix(UMI_STAGE_TWO.out.versions.first())
+
+    // MODULE: Input output of call consensus
+
+    if ( params.stage == 'three' ) {
+        bam_input2 = extract_csv(ch_input_sample)
+    }
+
+    bam_input2 = bam_input2.mix(UMI_STAGE_TWO.out.consensus_bam)
+
+    UMI_STAGE_THREE(PICARD_BED_TO_INTERVAL_LIST.out.intervals,bam_input2,fasta,bwa,dict,target_bed,dbsnp,dbsnp_tbi)
+
+
+    CUSTOM_DUMPSOFTWAREVERSIONS (ch_versions.unique().collectFile(name: 'collated_versions.yml'))
+
+    //
+    // MODULE: MultiQC
+    //
+    workflow_summary    = WorkflowUmialign.paramsSummaryMultiqc(workflow, summary_params)
+    ch_workflow_summary = Channel.value(workflow_summary)
+
+    ch_multiqc_files = Channel.empty()
+    ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+    ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
+    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_ONE.out.adapter_metrics.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_ONE.out.complexity_metrics.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_ONE.out.fastqc_log.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_ONE.out.pre_collapse_error.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_ONE.out.pre_collapse_metrics.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_TWO.out.family_sizes.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_THREE.out.md_umi_metrics.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_THREE.out.md_metrics.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_THREE.out.post_collapse_error.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_THREE.out.post_collapse_metrics.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_THREE.out.bamqc.collect{it[1]}.ifEmpty([]))
+    MULTIQC (
+        ch_multiqc_files.collect()
+    )
+    multiqc_report = MULTIQC.out.report.toList()
+    ch_versions    = ch_versions.mix(MULTIQC.out.versions)
+
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -407,46 +224,9 @@ def extract_csv(csv_file) {
             def bam         = file(row.bam,   checkIfExists: true)
             def CN          = params.sequencing_center ? "CN:${params.sequencing_center}\\t" : ''
             def read_group  = "\"@RG\\tID:${row.lane}\\t${CN}PU:${row.lane}\\tSM:${row.patient}_${row.sample}\\tLB:${row.patient}_${row.sample}\\tPL:ILLUMINA\""
-            meta.numLanes   = numLanes.toInteger()
             meta.read_group = read_group.toString()
             meta.data_type  = "bam"
             return [meta, bam]
-        // recalibration
-        } else if (row.table && row.cram) {
-            meta.id   = meta.sample
-            def cram  = file(row.cram,  checkIfExists: true)
-            def crai  = file(row.crai,  checkIfExists: true)
-            def table = file(row.table, checkIfExists: true)
-            meta.data_type  = "cram"
-            return [meta, cram, crai, table]
-        // recalibration when skipping MarkDuplicates
-        } else if (row.table && row.bam) {
-            meta.id   = meta.sample
-            def bam   = file(row.bam,   checkIfExists: true)
-            def bai   = file(row.bai,   checkIfExists: true)
-            def table = file(row.table, checkIfExists: true)
-            meta.data_type  = "bam"
-            return [meta, bam, bai, table]
-        // prepare_recalibration or variant_calling
-        } else if (row.cram) {
-            meta.id = meta.sample
-            def cram = file(row.cram, checkIfExists: true)
-            def crai = file(row.crai, checkIfExists: true)
-            meta.data_type  = "cram"
-            return [meta, cram, crai]
-        // prepare_recalibration when skipping MarkDuplicates
-        } else if (row.bam) {
-            meta.id = meta.sample
-            def bam = file(row.bam, checkIfExists: true)
-            def bai = file(row.bai, checkIfExists: true)
-            meta.data_type  = "bam"
-            return [meta, bam, bai]
-        // annotation
-        } else if (row.vcf) {
-            meta.id = meta.sample
-            def vcf = file(row.vcf, checkIfExists: true)
-            meta.data_type  = "vcf"
-            return [meta, vcf]
         } else {
             log.warn "Missing or unknown field in csv file header"
         }
