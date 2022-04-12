@@ -22,8 +22,11 @@ process FGBIO_FILTERCONSENSUSREADS {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
+    mkdir ./tmp
+
     fgbio \\
-        -Xmx${task.memory.toGiga()}g \\
+        -Xmx${task.memory.toGiga()}g 
+        --tmp-dir=./tmp \\
         FilterConsensusReads \\
         -i $bam \\
         --ref $fasta \\

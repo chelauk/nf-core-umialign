@@ -1,6 +1,6 @@
 process FGBIO_CALLMOLECULARCONSENSUSREADS {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_high'
 
     conda (params.enable_conda ? "bioconda::fgbio=2.0.0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -21,7 +21,9 @@ process FGBIO_CALLMOLECULARCONSENSUSREADS {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    fgbio \\
+    mkdir tmp
+
+    fgbio -Xmx${task.memory.toGiga()}g --tmp-dir=./tmp \\
         CallMolecularConsensusReads \\
         -i $bam \\
         --min-input-base-quality 30 \\
