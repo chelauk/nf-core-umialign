@@ -13,7 +13,7 @@ process PICARD_MERGEBAMALIGNMENT {
     path(dict)
 
     output:
-    tuple val(meta), path("*merged.bam"), emit: bam
+    tuple val(meta), path("*pre_collapse.bam"), emit: bam
     path  "versions.yml"                , emit: versions
 
     when:
@@ -42,7 +42,7 @@ process PICARD_MERGEBAMALIGNMENT {
         CLIP_OVERLAPPING_READS=true INCLUDE_SECONDARY_ALIGNMENTS=true \\
         MAX_INSERTIONS_OR_DELETIONS=-1 PRIMARY_ALIGNMENT_STRATEGY=MostDistant \\
         ATTRIBUTES_TO_RETAIN=XS \\
-        OUTPUT=${prefix}.merged.bam
+        OUTPUT=${prefix}_pre_collapse.bam
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         picard: \$( echo \$(picard MergeBamAlignment --version 2>&1) | grep -o 'Version:.*' | cut -f2- -d:)
@@ -51,7 +51,7 @@ process PICARD_MERGEBAMALIGNMENT {
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}" 
     """
-    touch ${prefix}.merged.bam
+    touch ${prefix}_pre_collapse.bam
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         picard: 2.26.10 
