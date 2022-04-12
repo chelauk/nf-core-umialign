@@ -68,8 +68,8 @@ workflow UMI_STAGE_ONE {
     ch_versions = ch_versions.mix(BM1.out.versions.first())
 
     // MODULE: merge adapter marked unaligned bam to aligned bam
-
-    PMB1 ( BM1.out.bam.join(PICARD_MARKADAPTERS.out.bam),fasta,dict )
+    pmb1_input = BM1.out.bam.join(PICARD_MARKADAPTERS.out.bam)
+    PMB1 ( pmb1_input,fasta,dict )
     ch_versions = ch_versions.mix(PMB1.out.versions.first())
 
     // SUBWORKFLOW: merge bams if necessary

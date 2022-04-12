@@ -11,17 +11,17 @@ process SAMBAMBA_MERGE {
     tuple val(meta), path(bam)
 
     output:
-    tuple val(meta), path("*sambamba.bam"), emit: bam
+    tuple val(meta), path("*pre_collapse.bam"), emit: bam
     path  "versions.yml"                , emit: versions
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.patient}_${meta.sample}"
     if ("$bam" == "${prefix}.bam") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
     sambamba merge  \\
     --nthreads=${task.cpus} \\
-    ${prefix}.sambamba.bam $bam 
+    ${prefix}_pre_collapse.bam $bam 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         sambamba: \$( echo \$(sambamba --version 2>&1 | sed 's/^.*sambamba //; s/ by.*//')) 
@@ -32,7 +32,7 @@ process SAMBAMBA_MERGE {
     def prefix = task.ext.prefix ?: "${meta.id}"
     if ("$bam" == "${prefix}.bam") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
-    touch ${prefix}.sambamba.bam
+    touch ${prefix}_pre_collapse.bam
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         sambamba: 0.8.1 

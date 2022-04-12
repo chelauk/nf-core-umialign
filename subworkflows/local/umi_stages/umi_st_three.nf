@@ -1,14 +1,12 @@
 //
-// stage two:
-// fgbio groups umi reads and calls consensus reads
-// callconsensus is the slowest stage by far and needs optimisation
-// family size metrics are also recorded
+// stage three:
+// fgbio filter, return bam to fastq realign with bwa
+// get post collapse metrics
 //
 
 include { FGBIO_FILTERCONSENSUSREADS        } from '../../../modules/nf-core/modules/fgbio/filterconsensus/main'
 include { PICARD_BAMTOFASTQ as B2FQ2        } from '../../../modules/nf-core/modules/picard/bamtofastq/main'
 include { BWA_MEM as BM2                    } from '../../../modules/nf-core/modules/bwa/mem/main'
-include { SAMBAMBA_SORT                     } from '../../../modules/nf-core/modules/sambamba/sort/main'
 include { PICARD_MERGEBAMALIGNMENT as PMB2  } from '../../../modules/nf-core/modules/picard/mergebamalignment/main'
 include { PICARD_COLLECTHSMETRICS as HS2    } from '../../../modules/nf-core/modules/picard/collecthsmetrics/main'
 include { FGBIO_ERROR_RATE as ER2           } from '../../../modules/nf-core/modules/fgbio/errorrate/main'
@@ -43,18 +41,6 @@ workflow UMI_STAGE_THREE {
     // MODULE: second bwa alignment
     sort = false
     BM2 ( B2FQ2.out.fastq,bwa,sort )
-
-'''
-    // MODULE: sambamba queryname sort filter consensus out
-    SAMBAMBA_SORT ( FGBIO_FILTERCONSENSUSREADS.out.bam )
-    ch_versions = ch_versions.mix(SAMBAMBA_SORT.out.versions.first())
-
-            PMB2 (
-                BM2.out.bam.join(SAMBAMBA_SORT.out.bam),
-                fasta,
-                dict
-            )
-'''
 
     // MODULE: picard mergebamalignment
     PMB2(BM2.out.bam.join(FGBIO_FILTERCONSENSUSREADS.out.bam),fasta,dict)
