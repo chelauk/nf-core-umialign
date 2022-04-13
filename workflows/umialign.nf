@@ -220,7 +220,9 @@ def extract_csv(csv_file) {
             return [meta, [fastq_1, fastq_2, fastq_3]]
         // start from BAM
         } else if (row.lane && row.bam) {
-            meta.id         = "${row.sample}_${row.lane}".toString()
+            meta.patient    = row.patient.toString()
+            meta.sample     = row.sample.toString()
+            meta.id         = "${row.patient}_${row.sample}".toString()
             def bam         = file(row.bam,   checkIfExists: true)
             def CN          = params.sequencing_center ? "CN:${params.sequencing_center}\\t" : ''
             def read_group  = "\"@RG\\tID:${row.lane}\\t${CN}PU:${row.lane}\\tSM:${row.patient}_${row.sample}\\tLB:${row.patient}_${row.sample}\\tPL:ILLUMINA\""
