@@ -82,10 +82,22 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS       } from '../modules/nf-core/modules/c
 def multiqc_report = []
 
 workflow UMIALIGN {
-
+// initialise channels
     ch_versions  = Channel.empty()
     bam_input1   = Channel.empty()
     bam_input2   = Channel.empty()
+	umi_st_one_adapter_metrics         = Channel.empty()
+	umi_st_one_complexity_metrics      = Channel.empty()
+	umi_st_one_fastqc_log              = Channel.empty()
+	umi_st_one_pre_collapse_error      = Channel.empty()
+	umi_st_one_pre_collapse_metrics    = Channel.empty()
+	umi_st_two_family_sizes            = Channel.empty()
+	umi_st_three_md_umi_metrics        = Channel.empty()
+	umi_st_three_md_metrics            = Channel.empty()
+	umi_st_three_post_collapse_error   = Channel.empty()
+	umi_st_three_post_collapse_metrics = Channel.empty()
+	umi_st_three_bamqc                 = Channel.empty()
+
 
     // MODULE create interval list with picard
 
@@ -94,34 +106,52 @@ workflow UMIALIGN {
     // SUBWORKFLOW Run from fastqs
 
     if ( params.stage == 'one' ) {
-
-    reads = extract_csv(csv_file)
-    UMI_STAGE_ONE( PICARD_BED_TO_INTERVAL_LIST.out.intervals, reads,fasta,dict,dbsnp,dbsnp_tbi,bwa )
-    ch_versions = ch_versions.mix(UMI_STAGE_ONE.out.versions.first())
-
+        reads = extract_csv(csv_file)
+    	UMI_STAGE_ONE( PICARD_BED_TO_INTERVAL_LIST.out.intervals, reads,fasta,dict,dbsnp,dbsnp_tbi,bwa )
+    	bam_input1 = bam_input1.mix(UMI_STAGE_ONE.out.merged_bam)
+   		umi_st_one_adapter_metrics       = UMI_STAGE_ONE.out.adapter_metrics.mix(UMI_STAGE_ONE.out.adapter_metrics) 
+    	umi_st_one_complexity_metrics    = UMI_STAGE_ONE.out.complexity_metrics.mix(UMI_STAGE_ONE.out.complexity_metrics)
+    	umi_st_one_fastqc_log            = UMI_STAGE_ONE.out.fastqc_log.mix(UMI_STAGE_ONE.out.fastqc_log)
+    	umi_st_one_pre_collapse_error    = UMI_STAGE_ONE.out.pre_collapse_error.mix(UMI_STAGE_ONE.out.pre_collapse_error)
+    	umi_st_one_pre_collapse_metrics  = UMI_STAGE_ONE.out.pre_collapse_metrics.mix(UMI_STAGE_ONE.out.pre_collapse_metrics)
+		ch_versions = ch_versions.mix(UMI_STAGE_ONE.out.versions.first())
     }
 
     // MODULE: Input merged bams before group and call consensus
 
-    if ( params.stage == 'two' ) {
-        bam_input1 = extract_csv(ch_input_sample)
-    }
-
-    bam_input1 = bam_input1.mix(UMI_STAGE_ONE.out.merged_bam)
-
-    UMI_STAGE_TWO(bam_input1)
-    ch_versions = ch_versions.mix(UMI_STAGE_TWO.out.versions.first())
+     if ( params.stage == 'two' ) {
+        bam_input1 = extract_csv(csv_file)
+        UMI_STAGE_TWO(bam_input1)
+		bam_input2  = bam_input2.mix(UMI_STAGE_TWO.out.consensus_bam)
+	    umi_st_two_family_sizes            = UMI_STAGE_TWO.out.family_sizes.mix(UMI_STAGE_TWO.out.family_sizes)
+        ch_versions = ch_versions.mix(UMI_STAGE_TWO.out.versions.first())
+    } else {
+        UMI_STAGE_TWO(bam_input1)
+		bam_input2  = bam_input2.mix(UMI_STAGE_TWO.out.consensus_bam)
+	    umi_st_two_family_sizes            = UMI_STAGE_TWO.out.family_sizes.mix(UMI_STAGE_TWO.out.family_sizes)
+        ch_versions = ch_versions.mix(UMI_STAGE_TWO.out.versions.first())
+		} 
 
     // MODULE: Input output of call consensus
 
     if ( params.stage == 'three' ) {
-        bam_input2 = extract_csv(ch_input_sample)
-    }
-
-    bam_input2 = bam_input2.mix(UMI_STAGE_TWO.out.consensus_bam)
-
-    UMI_STAGE_THREE(PICARD_BED_TO_INTERVAL_LIST.out.intervals,bam_input2,fasta,bwa,dict,target_bed,dbsnp,dbsnp_tbi)
-
+        bam_input2  = extract_csv(csv_file)
+        UMI_STAGE_THREE(PICARD_BED_TO_INTERVAL_LIST.out.intervals,bam_input2,fasta,bwa,dict,target_bed,dbsnp,dbsnp_tbi)
+		umi_st_three_md_umi_metrics        =  UMI_STAGE_THREE.out.md_umi_metrics.mix(UMI_STAGE_THREE.out.md_umi_metrics)       
+		umi_st_three_md_metrics            =  UMI_STAGE_THREE.out.md_metrics.mix(UMI_STAGE_THREE.out.md_metrics)
+		umi_st_three_post_collapse_error   =  UMI_STAGE_THREE.out.post_collapse_error.mix(UMI_STAGE_THREE.out.post_collapse_error)
+		umi_st_three_post_collapse_metrics =  UMI_STAGE_THREE.out.post_collapse_metrics.mix(UMI_STAGE_THREE.out.post_collapse_metrics)
+		umi_st_three_bamqc                 =  UMI_STAGE_THREE.out.bamqc.mix(UMI_STAGE_THREE.out.bamqc)              
+        ch_versions = ch_versions.mix(UMI_STAGE_THREE.out.versions.first())
+    } else {
+		UMI_STAGE_THREE(PICARD_BED_TO_INTERVAL_LIST.out.intervals,bam_input2,fasta,bwa,dict,target_bed,dbsnp,dbsnp_tbi)
+		umi_st_three_md_umi_metrics        =  UMI_STAGE_THREE.out.md_umi_metrics.mix(UMI_STAGE_THREE.out.md_umi_metrics)       
+		umi_st_three_md_metrics            =  UMI_STAGE_THREE.out.md_metrics.mix(UMI_STAGE_THREE.out.md_metrics)
+		umi_st_three_post_collapse_error   =  UMI_STAGE_THREE.out.post_collapse_error.mix(UMI_STAGE_THREE.out.post_collapse_error)
+		umi_st_three_post_collapse_metrics =  UMI_STAGE_THREE.out.post_collapse_metrics.mix(UMI_STAGE_THREE.out.post_collapse_metrics)
+		umi_st_three_bamqc                 =  UMI_STAGE_THREE.out.bamqc.mix(UMI_STAGE_THREE.out.bamqc)              
+		ch_versions = ch_versions.mix(UMI_STAGE_THREE.out.versions.first())
+		}
 
     CUSTOM_DUMPSOFTWAREVERSIONS (ch_versions.unique().collectFile(name: 'collated_versions.yml'))
 
@@ -136,17 +166,17 @@ workflow UMIALIGN {
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
-    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_ONE.out.adapter_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_ONE.out.complexity_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_ONE.out.fastqc_log.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_ONE.out.pre_collapse_error.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_ONE.out.pre_collapse_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_TWO.out.family_sizes.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_THREE.out.md_umi_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_THREE.out.md_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_THREE.out.post_collapse_error.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_THREE.out.post_collapse_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(UMI_STAGE_THREE.out.bamqc.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_adapter_metrics.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_complexity_metrics.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_fastqc_log.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_pre_collapse_error.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_pre_collapse_metrics.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_two_family_sizes.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_md_umi_metrics.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_md_metrics.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_post_collapse_error.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_post_collapse_metrics.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_bamqc.collect{it[1]}.ifEmpty([]))
     MULTIQC (
         ch_multiqc_files.collect()
     )
@@ -219,7 +249,7 @@ def extract_csv(csv_file) {
             meta.data_type  = 'fastq'
             return [meta, [fastq_1, fastq_2, fastq_3]]
         // start from BAM
-        } else if (row.lane && row.bam) {
+        } else if (row.patient && row.bam) {
             meta.patient    = row.patient.toString()
             meta.sample     = row.sample.toString()
             meta.id         = "${row.patient}_${row.sample}".toString()

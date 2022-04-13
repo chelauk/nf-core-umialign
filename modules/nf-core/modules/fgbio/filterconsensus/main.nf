@@ -25,7 +25,7 @@ process FGBIO_FILTERCONSENSUSREADS {
     mkdir ./tmp
 
     fgbio \\
-        -Xmx${task.memory.toGiga()}g 
+        -Xmx${task.memory.toGiga()}g \\
         --tmp-dir=./tmp \\
         FilterConsensusReads \\
         -i $bam \\
