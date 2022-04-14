@@ -246,12 +246,12 @@ def extract_csv(csv_file) {
             meta.numLanes   = numLanes.toInteger()
             meta.read_group = read_group.toString()
             meta.data_type  = 'fastq'
- 
+
             fqs = [] // list to fill with all arguements matching regex below
             map_fqs = row.findAll{k,v -> k.matches(~/^fastq(_[0-9]+)?/)} // find fqs in row
             map_fqs = map_fqs.sort{it -> (it.key.replaceAll(/fastq(_)?/, "") ?: 0).toInteger() } // sort matches
             for (fq in map_fqs) {
-              fqs.add(file(fq.value, checkIfExists: true))
+            fqs.add(file(fq.value, checkIfExists: true))
             }
 
             return [meta, fqs]
