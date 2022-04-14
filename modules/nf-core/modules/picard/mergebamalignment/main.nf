@@ -30,9 +30,11 @@ process PICARD_MERGEBAMALIGNMENT {
         avail_mem = task.memory.giga
     }
     """
+        [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
     picard \\
         -Xmx${avail_mem}g \\
         MergeBamAlignment \\
+        TMP_DIR=./tmpdir \\
         MAX_RECORDS_IN_RAM=${max_records} \\
         R=${fasta} \\
         $args \\
