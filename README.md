@@ -16,9 +16,7 @@
 
 ## Introduction
 
-<!-- TODO nf-core: Write a 1-2 sentence summary of what data the pipeline is for and what it does -->
-
-**nf-core/umialign** is a bioinformatics best-practice analysis pipeline for process umi fastqs.
+**nf-core/umialign** is a bioinformatics best-practice analysis pipeline for processing umi fastqs.
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker/Singularity containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies. Where possible, these processes have been submitted to and installed from [nf-core/modules](https://github.com/nf-core/modules) in order to make them available to all nf-core pipelines, and to everyone within the Nextflow community!
 
@@ -31,7 +29,25 @@ On release, automated continuous integration tests run the pipeline on a full-si
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
 1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
-2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+2. Create Unaligned bam file from fastqs with UMI tag ([`fgbio`](https://http://fulcrumgenomics.github.io/fgbio/))
+3. Estimate library complexity ([`Picard`](http://broadinstitute.github.io/picard/))
+4. Mark Illumina adapters ([`Picard`](http://broadinstitute.github.io/picard/))
+5. Revert a copy of the unaligned bam to fastq ([`Picard`](http://broadinstitute.github.io/picard/))
+6. Align fastqs to reference index ([`bwa`](http://bio-bwa.sourceforge.net/bwa.shtml))
+7. Merge unaligned bam with aligned bam to include umi ([`Picard`](http://broadinstitute.github.io/picard/))
+8. Check pre-collapse metrics ([`Picard`](http://broadinstitute.github.io/picard/))
+9. Check pre-collapse error-rates ([`fgbio`](https://http://fulcrumgenomics.github.io/fgbio/))
+10. Group reads by umi ([`fgbio`](https://http://fulcrumgenomics.github.io/fgbio/))
+11. Call consensus reads ([`fgbio`](https://http://fulcrumgenomics.github.io/fgbio/))
+12. Filter consensus reads ([`fgbio`](https://http://fulcrumgenomics.github.io/fgbio/))
+13. Revert copy of bam to fastqs ([`Picard`](http://broadinstitute.github.io/picard/))
+14. Align fastqs to reference index ([`bwa`](http://bio-bwa.sourceforge.net/bwa.shtml))
+15. Merge filtered bam with aligned bam ([`Picard`](http://broadinstitute.github.io/picard/))
+16. Get post-collapse metrics  ([`Picard`](http://broadinstitute.github.io/picard/))
+17. Check post-collapse error-rates ([`fgbio`](https://http://fulcrumgenomics.github.io/fgbio/))
+18. Use umi-aware mark-duplicates ([`Picard`](http://broadinstitute.github.io/picard/))
+19. Run Qualimap bamqc ([`Qualimap`](http://qualimap.conesalab.org/))
+20. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
 
 ## Quick Start
 
