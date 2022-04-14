@@ -158,6 +158,7 @@ workflow UMIALIGN {
     //
     // MODULE: MultiQC
     //
+
     workflow_summary    = WorkflowUmialign.paramsSummaryMultiqc(workflow, summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
@@ -166,17 +167,17 @@ workflow UMIALIGN {
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
-    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_adapter_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_complexity_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_fastqc_log.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_pre_collapse_error.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_pre_collapse_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(umi_st_two_family_sizes.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_md_umi_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_md_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_post_collapse_error.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_post_collapse_metrics.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_bamqc.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_adapter_metrics.unique().collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_complexity_metrics.unique().collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_fastqc_log.unique().collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_pre_collapse_error.unique().collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_one_pre_collapse_metrics.unique().collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_two_family_sizes.unique().collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_md_umi_metrics.unique().collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_md_metrics.unique().collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_post_collapse_error.unique().collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_post_collapse_metrics.unique().collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_bamqc.unique().collect{it[1]}.ifEmpty([]))
     MULTIQC (
         ch_multiqc_files.collect()
     )
