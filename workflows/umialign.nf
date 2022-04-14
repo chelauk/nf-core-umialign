@@ -109,7 +109,7 @@ workflow UMIALIGN {
         reads = extract_csv(csv_file)
     	UMI_STAGE_ONE( PICARD_BED_TO_INTERVAL_LIST.out.intervals, reads,fasta,dict,dbsnp,dbsnp_tbi,bwa )
     	bam_input1 = bam_input1.mix(UMI_STAGE_ONE.out.merged_bam)
-   		umi_st_one_adapter_metrics       = UMI_STAGE_ONE.out.adapter_metrics.mix(UMI_STAGE_ONE.out.adapter_metrics) 
+   		umi_st_one_adapter_metrics       = UMI_STAGE_ONE.out.adapter_metrics.mix(UMI_STAGE_ONE.out.adapter_metrics)
     	umi_st_one_complexity_metrics    = UMI_STAGE_ONE.out.complexity_metrics.mix(UMI_STAGE_ONE.out.complexity_metrics)
     	umi_st_one_fastqc_log            = UMI_STAGE_ONE.out.fastqc_log.mix(UMI_STAGE_ONE.out.fastqc_log)
     	umi_st_one_pre_collapse_error    = UMI_STAGE_ONE.out.pre_collapse_error.mix(UMI_STAGE_ONE.out.pre_collapse_error)
@@ -119,39 +119,39 @@ workflow UMIALIGN {
 
     // MODULE: Input merged bams before group and call consensus
 
-     if ( params.stage == 'two' ) {
+    if ( params.stage == 'two' ) {
         bam_input1 = extract_csv(csv_file)
         UMI_STAGE_TWO(bam_input1)
-		bam_input2  = bam_input2.mix(UMI_STAGE_TWO.out.consensus_bam)
-	    umi_st_two_family_sizes            = UMI_STAGE_TWO.out.family_sizes.mix(UMI_STAGE_TWO.out.family_sizes)
+        bam_input2  = bam_input2.mix(UMI_STAGE_TWO.out.consensus_bam)
+        umi_st_two_family_sizes            = UMI_STAGE_TWO.out.family_sizes.mix(UMI_STAGE_TWO.out.family_sizes)
         ch_versions = ch_versions.mix(UMI_STAGE_TWO.out.versions.first())
     } else {
         UMI_STAGE_TWO(bam_input1)
-		bam_input2  = bam_input2.mix(UMI_STAGE_TWO.out.consensus_bam)
-	    umi_st_two_family_sizes            = UMI_STAGE_TWO.out.family_sizes.mix(UMI_STAGE_TWO.out.family_sizes)
+        bam_input2  = bam_input2.mix(UMI_STAGE_TWO.out.consensus_bam)
+        umi_st_two_family_sizes            = UMI_STAGE_TWO.out.family_sizes.mix(UMI_STAGE_TWO.out.family_sizes)
         ch_versions = ch_versions.mix(UMI_STAGE_TWO.out.versions.first())
-		} 
+    }
 
     // MODULE: Input output of call consensus
 
     if ( params.stage == 'three' ) {
         bam_input2  = extract_csv(csv_file)
         UMI_STAGE_THREE(PICARD_BED_TO_INTERVAL_LIST.out.intervals,bam_input2,fasta,bwa,dict,target_bed,dbsnp,dbsnp_tbi)
-		umi_st_three_md_umi_metrics        =  UMI_STAGE_THREE.out.md_umi_metrics.mix(UMI_STAGE_THREE.out.md_umi_metrics)       
-		umi_st_three_md_metrics            =  UMI_STAGE_THREE.out.md_metrics.mix(UMI_STAGE_THREE.out.md_metrics)
-		umi_st_three_post_collapse_error   =  UMI_STAGE_THREE.out.post_collapse_error.mix(UMI_STAGE_THREE.out.post_collapse_error)
-		umi_st_three_post_collapse_metrics =  UMI_STAGE_THREE.out.post_collapse_metrics.mix(UMI_STAGE_THREE.out.post_collapse_metrics)
-		umi_st_three_bamqc                 =  UMI_STAGE_THREE.out.bamqc.mix(UMI_STAGE_THREE.out.bamqc)              
+        umi_st_three_md_umi_metrics        =  UMI_STAGE_THREE.out.md_umi_metrics.mix(UMI_STAGE_THREE.out.md_umi_metrics)
+        umi_st_three_md_metrics            =  UMI_STAGE_THREE.out.md_metrics.mix(UMI_STAGE_THREE.out.md_metrics)
+        umi_st_three_post_collapse_error   =  UMI_STAGE_THREE.out.post_collapse_error.mix(UMI_STAGE_THREE.out.post_collapse_error)
+        umi_st_three_post_collapse_metrics =  UMI_STAGE_THREE.out.post_collapse_metrics.mix(UMI_STAGE_THREE.out.post_collapse_metrics)
+        umi_st_three_bamqc                 =  UMI_STAGE_THREE.out.bamqc.mix(UMI_STAGE_THREE.out.bamqc)
         ch_versions = ch_versions.mix(UMI_STAGE_THREE.out.versions.first())
     } else {
-		UMI_STAGE_THREE(PICARD_BED_TO_INTERVAL_LIST.out.intervals,bam_input2,fasta,bwa,dict,target_bed,dbsnp,dbsnp_tbi)
-		umi_st_three_md_umi_metrics        =  UMI_STAGE_THREE.out.md_umi_metrics.mix(UMI_STAGE_THREE.out.md_umi_metrics)       
-		umi_st_three_md_metrics            =  UMI_STAGE_THREE.out.md_metrics.mix(UMI_STAGE_THREE.out.md_metrics)
-		umi_st_three_post_collapse_error   =  UMI_STAGE_THREE.out.post_collapse_error.mix(UMI_STAGE_THREE.out.post_collapse_error)
-		umi_st_three_post_collapse_metrics =  UMI_STAGE_THREE.out.post_collapse_metrics.mix(UMI_STAGE_THREE.out.post_collapse_metrics)
-		umi_st_three_bamqc                 =  UMI_STAGE_THREE.out.bamqc.mix(UMI_STAGE_THREE.out.bamqc)              
-		ch_versions = ch_versions.mix(UMI_STAGE_THREE.out.versions.first())
-		}
+        UMI_STAGE_THREE(PICARD_BED_TO_INTERVAL_LIST.out.intervals,bam_input2,fasta,bwa,dict,target_bed,dbsnp,dbsnp_tbi)
+        umi_st_three_md_umi_metrics        =  UMI_STAGE_THREE.out.md_umi_metrics.mix(UMI_STAGE_THREE.out.md_umi_metrics)
+        umi_st_three_md_metrics            =  UMI_STAGE_THREE.out.md_metrics.mix(UMI_STAGE_THREE.out.md_metrics)
+        umi_st_three_post_collapse_error   =  UMI_STAGE_THREE.out.post_collapse_error.mix(UMI_STAGE_THREE.out.post_collapse_error)
+        umi_st_three_post_collapse_metrics =  UMI_STAGE_THREE.out.post_collapse_metrics.mix(UMI_STAGE_THREE.out.post_collapse_metrics)
+        umi_st_three_bamqc                 =  UMI_STAGE_THREE.out.bamqc.mix(UMI_STAGE_THREE.out.bamqc)
+        ch_versions = ch_versions.mix(UMI_STAGE_THREE.out.versions.first())
+    }
 
     CUSTOM_DUMPSOFTWAREVERSIONS (ch_versions.unique().collectFile(name: 'collated_versions.yml'))
 
