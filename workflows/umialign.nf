@@ -234,20 +234,28 @@ def extract_csv(csv_file) {
         else meta.status = 0
 
         // mapping with fastq
-        if (row.lane && row.fastq_3) {
+        if (row.lane) {
             meta.patient    = row.patient.toString()
             meta.sample     = row.sample.toString()
             meta.lane       = row.lane.toString()
             meta.id         = "${row.patient}_${row.sample}_${row.lane}"
             def fastq_1     = file(row.fastq_1, checkIfExists: true)
             def fastq_2     = file(row.fastq_2, checkIfExists: true)
-            def fastq_3     = file(row.fastq_3, checkIfExists: true)
             def CN          = params.sequencing_center ? "CN:${params.sequencing_center}\\t" : ''
             def read_group  = "\"@RG\\tID:${row.patient}_${row.sample}\\t${CN}PU:${row.lane}\\tSM:${row.patient}_${row.sample}\\tLB:${row.patient}_${row.sample}\\tPL:ILLUMINA\""
             meta.numLanes   = numLanes.toInteger()
             meta.read_group = read_group.toString()
             meta.data_type  = 'fastq'
-            return [meta, [fastq_1, fastq_2, fastq_3]]
+ 
+            fqs = [] // list to fill with all arguements matching regex below
+            map_fqs = row.findAll{k,v -> k.matches(~/^fastq(_[0-9]+)?/)} // find fqs in row
+            map_fqs = map_fqs.sort{it -> (it.key.replaceAll(/fastq(_)?/, "") ?: 0).toInteger() } // sort matches
+            for (fq in map_fqs) {
+              fqs.add(file(fq.value, checkIfExists: true))
+            }
+
+            return [meta, fqs]
+
         // start from BAM
         } else if (row.patient && row.bam) {
             meta.patient    = row.patient.toString()
