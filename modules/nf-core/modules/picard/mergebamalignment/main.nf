@@ -13,7 +13,7 @@ process PICARD_MERGEBAMALIGNMENT {
     path(dict)
 
     output:
-    tuple val(meta), path("*pre_collapse.bam"), emit: bam
+    tuple val(meta), path("*.bam"), emit: bam
     path  "versions.yml"                , emit: versions
 
     when:
