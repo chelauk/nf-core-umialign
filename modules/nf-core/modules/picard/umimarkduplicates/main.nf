@@ -33,13 +33,13 @@ process PICARD_UMIMARKDUPLICATES {
     picard \\
         -Xmx${avail_mem}g \\
         UmiAwareMarkDuplicatesWithMateCigar \\
-        --INPUT  $bam \\
+        INPUT=$bam \\
         $args \\
-        --OUTPUT ${prefix}_umi_aware_md.bam \\
-        --ASSUME_SORT_ORDER  coordinate \\
-        --METRICS_FILE ${prefix}_duplicate.metrics \\
-        --UMI_METRICS_FILE ${prefix}_umi.metrics \\
-        --CREATE_INDEX true
+        OUTPUT=${prefix}_umi_aware_md.bam \\
+        ASSUME_SORT_ORDER=coordinate \\
+        METRICS_FILE=${prefix}_duplicate.metrics \\
+        UMI_METRICS_FILE=${prefix}_umi.metrics \\
+        CREATE_INDEX=true
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
