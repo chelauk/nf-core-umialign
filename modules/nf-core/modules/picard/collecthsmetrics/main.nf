@@ -20,6 +20,7 @@ process PICARD_COLLECTHSMETRICS {
 
     script:
     def args = task.ext.args ?: ''
+    def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
 
     def avail_mem = 3
@@ -32,6 +33,7 @@ process PICARD_COLLECTHSMETRICS {
     picard \\
         -Xmx${avail_mem}g \\
         CollectHsMetrics \\
+        $args2 \\
         I=$bam \\
         O=${prefix}_${args}_collecthsmetrics.txt \\
         BAIT_INTERVALS=$target_intervals \\

@@ -34,6 +34,7 @@ process PICARD_UMIMARKDUPLICATES {
         -Xmx${avail_mem}g \\
         UmiAwareMarkDuplicatesWithMateCigar \\
         --INPUT  $bam \\
+        $args \\
         --OUTPUT ${prefix}_umi_aware_md.bam \\
         --ASSUME_SORT_ORDER  coordinate \\
         --METRICS_FILE ${prefix}_duplicate.metrics \\
