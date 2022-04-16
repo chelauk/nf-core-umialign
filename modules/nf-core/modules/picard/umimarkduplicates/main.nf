@@ -30,9 +30,12 @@ process PICARD_UMIMARKDUPLICATES {
         avail_mem = task.memory.giga
     }
     """
+    [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
+
     picard \\
         -Xmx${avail_mem}g \\
         UmiAwareMarkDuplicatesWithMateCigar \\
+        TMP_DIR=./tmpdir \\
         INPUT=$bam \\
         $args \\
         OUTPUT=${prefix}_umi_aware_md.bam \\
