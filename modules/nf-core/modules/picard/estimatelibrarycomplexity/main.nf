@@ -30,8 +30,8 @@ process PICARD_ESTIMATELIBRARYCOMPLEXITY {
     [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
     picard \\
         -Xmx${avail_mem}g \\
-        TMP_DIR=./tmpdir \\
         EstimateLibraryComplexity \\
+        -TMP_DIR ./tmpdir \\
         $args \\
         -INPUT $bam \\
         -BARCODE_TAG RX \\
