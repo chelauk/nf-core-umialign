@@ -1,6 +1,6 @@
 process PICARD_ESTIMATELIBRARYCOMPLEXITY {
     tag "$meta.id"
-    label 'process_high'
+    label 'process_long'
 
     conda (params.enable_conda ? "bioconda::picard=2.26.10" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -27,8 +27,10 @@ process PICARD_ESTIMATELIBRARYCOMPLEXITY {
         avail_mem = task.memory.giga
     }
     """
+    [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
     picard \\
         -Xmx${avail_mem}g \\
+        TMP_DIR=./tmpdir \\
         EstimateLibraryComplexity \\
         $args \\
         -INPUT $bam \\
