@@ -24,6 +24,7 @@ process FGBIO_FASTQTOBAM {
     """
     [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
 
+    echo "$task.attempt" > task.attempt
     fgbio \\
         -Xmx${task.memory.toGiga()}g \\
         --tmp-dir=./tmpdir \\
