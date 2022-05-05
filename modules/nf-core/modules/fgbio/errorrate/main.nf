@@ -1,6 +1,6 @@
 process FGBIO_ERROR_RATE {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_long'
 
     conda (params.enable_conda ? "bioconda::fgbio=2.0.0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

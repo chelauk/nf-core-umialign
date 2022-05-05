@@ -30,8 +30,10 @@ process PICARD_COLLECTHSMETRICS {
         avail_mem = task.memory.giga
     }
     """
+    [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
     picard \\
         -Xmx${avail_mem}g \\
+        TMP_DIR=./tmpdir \\
         CollectHsMetrics \\
         $args2 \\
         I=$bam \\
