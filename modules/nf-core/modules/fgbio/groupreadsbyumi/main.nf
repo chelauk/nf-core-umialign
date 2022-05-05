@@ -22,11 +22,12 @@ process FGBIO_GROUPREADSBYUMI {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    mkdir tmp
+    [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
+
     
     fgbio \\
         -Xmx${task.memory.toGiga()}g \\
-        --tmp-dir=./tmp \\
+        --tmp-dir=./tmpdir \\
         GroupReadsByUmi \\
         $args \\
         -i $taggedbam \\

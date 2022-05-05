@@ -21,9 +21,9 @@ process FGBIO_CALLMOLECULARCONSENSUSREADS {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    mkdir tmp
+    [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
 
-    fgbio -Xmx${task.memory.toGiga()}g --tmp-dir=./tmp \\
+    fgbio -Xmx${task.memory.toGiga()}g --tmp-dir=./tmpdir \\
         CallMolecularConsensusReads \\
         -i $bam \\
         --min-input-base-quality 30 \\
