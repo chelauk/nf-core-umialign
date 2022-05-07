@@ -33,8 +33,8 @@ process PICARD_COLLECTHSMETRICS {
     [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
     picard \\
         -Xmx${avail_mem}g \\
-        TMP_DIR=./tmpdir \\
         CollectHsMetrics \\
+        TMP_DIR=./tmpdir \\
         $args2 \\
         I=$bam \\
         O=${prefix}_${args}_collecthsmetrics.txt \\
