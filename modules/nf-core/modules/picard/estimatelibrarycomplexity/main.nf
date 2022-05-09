@@ -34,9 +34,9 @@ process PICARD_ESTIMATELIBRARYCOMPLEXITY {
         EstimateLibraryComplexity \\
         TMP_DIR=./tmpdir \
         $args \\
-        --INPUT $bam \\
-        --BARCODE_TAG RX \\
-        --OUTPUT ${prefix}_library_complexity.txt
+        INPUT=$bam \\
+        BARCODE_TAG=RX \\
+        OUTPUT=${prefix}_library_complexity.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
