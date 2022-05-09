@@ -33,6 +33,7 @@ process PICARD_MARKADAPTERS {
     picard \\
         -Xmx${avail_mem}g \\
         MarkIlluminaAdapters \\
+        -TMP_DIR ./tmpdir \\
         MAX_RECORDS_IN_RAM=${max_records} \\
         $args \\
         I=$bam \\
