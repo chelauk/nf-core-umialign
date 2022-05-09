@@ -1,6 +1,6 @@
 process PICARD_MARKADAPTERS {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_low'
 
     conda (params.enable_conda ? "bioconda::picard=2.26.10" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -30,10 +30,12 @@ process PICARD_MARKADAPTERS {
         avail_mem = task.memory.giga
     }
     """
+    [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
+
     picard \\
         -Xmx${avail_mem}g \\
         MarkIlluminaAdapters \\
-        -TMP_DIR ./tmpdir \\
+        TMP_DIR=./tmpdir \\
         MAX_RECORDS_IN_RAM=${max_records} \\
         $args \\
         I=$bam \\

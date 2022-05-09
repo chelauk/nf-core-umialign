@@ -35,7 +35,7 @@ process PICARD_UMIMARKDUPLICATES {
     picard \\
         -Xmx${avail_mem}g \\
         UmiAwareMarkDuplicatesWithMateCigar \\
-        -TMP_DIR ./tmpdir \\
+        TMP_DIR=./tmpdir \\
         INPUT=$bam \\
         $args \\
         OUTPUT=${prefix}_umi_aware_md.bam \\

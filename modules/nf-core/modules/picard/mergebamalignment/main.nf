@@ -35,7 +35,7 @@ process PICARD_MERGEBAMALIGNMENT {
     picard \\
         -Xmx${avail_mem}g \\
         MergeBamAlignment \\
-        -TMP_DIR ./tmpdir \\
+        TMP_DIR=./tmpdir \\
         MAX_RECORDS_IN_RAM=${max_records} \\
         R=${fasta} \\
         $args \\

@@ -29,11 +29,12 @@ process PICARD_BAMTOFASTQ {
     }
     """
     [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
+
     picard \\
         -Xmx${avail_mem}g \\
         SamToFastq \\
         MAX_RECORDS_IN_RAM=${max_records} \\
-        -TMP_DIR ./tmpdir \\
+        TMP_DIR=./tmpdir \\
         $args \\
         I=$bam \\
         FASTQ=${prefix}.fastq.gz \\
