@@ -23,7 +23,9 @@ process FGBIO_CALLMOLECULARCONSENSUSREADS {
     """
     [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
 
-    fgbio -Xmx${task.memory.toGiga()}g --tmp-dir=./tmpdir \\
+    fgbio -Xmx${task.memory.toGiga()}g \\
+        -XX:+AggressiveOpts -XX:+AggressiveHeap \\
+        --tmp-dir=./tmpdir \\
         CallMolecularConsensusReads \\
         -i $bam \\
         --min-input-base-quality 30 \\
