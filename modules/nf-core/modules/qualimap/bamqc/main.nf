@@ -33,9 +33,10 @@ process QUALIMAP_BAMQC {
         strandedness = 'strand-specific-reverse'
     }
     """
+    [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
+
     unset DISPLAY
-    mkdir tmp
-    export _JAVA_OPTIONS=-Djava.io.tmpdir=./tmp
+    export _JAVA_OPTIONS=-Djava.io.tmpdir=./tmpdir
     qualimap \\
         --java-mem-size=$memory \\
         bamqc \\
