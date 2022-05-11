@@ -1,6 +1,6 @@
 process PICARD_MARKADAPTERS {
     tag "$meta.id"
-    label 'process_low'
+    label '4_cpus'
 
     conda (params.enable_conda ? "bioconda::picard=2.26.10" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
