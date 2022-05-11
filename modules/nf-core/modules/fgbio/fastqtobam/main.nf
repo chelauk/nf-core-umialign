@@ -1,6 +1,6 @@
 process FGBIO_FASTQTOBAM {
     tag "$meta.id"
-    label 'two_cpus'
+    label 'four_cpus'
 
     conda (params.enable_conda ? "bioconda::fgbio=2.0.0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -27,6 +27,7 @@ process FGBIO_FASTQTOBAM {
     echo "$task.attempt" > task.attempt
     fgbio \\
         -Xmx${task.memory.toGiga()}g \\
+        -XX:+AggressiveOpts -XX:+AggressiveHeap \\
         --tmp-dir=./tmpdir \\
         FastqToBam \\
         $args \\
