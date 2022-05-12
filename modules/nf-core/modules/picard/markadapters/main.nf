@@ -23,7 +23,7 @@ process PICARD_MARKADAPTERS {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def avail_mem = 3
-    def max_records = task.memory.toGiga() * 100000
+    def max_records = task.memory.toGiga() * 250000
     if (!task.memory) {
         log.info '[Picard MarkIlluminaAdapters] Available memory not known - defaulting to 3GB. Specify process memory requirements to change this.'
     } else {

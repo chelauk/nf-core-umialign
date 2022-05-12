@@ -20,7 +20,7 @@ process PICARD_MERGEBAMALIGNMENT {
     task.ext.when == null || task.ext.when
 
     script:
-    def max_records = task.memory.toGiga() * 100000
+    def max_records = task.memory.toGiga() * 250000
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def avail_mem = 3
