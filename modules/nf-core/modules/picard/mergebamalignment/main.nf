@@ -46,6 +46,8 @@ process PICARD_MERGEBAMALIGNMENT {
         MAX_INSERTIONS_OR_DELETIONS=-1 PRIMARY_ALIGNMENT_STRATEGY=MostDistant \\
         ATTRIBUTES_TO_RETAIN=XS \\
         OUTPUT=${prefix}.bam
+    
+    rm -r ./tmpdir
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         picard: \$( echo \$(picard MergeBamAlignment --version 2>&1) | grep -o 'Version:.*' | cut -f2- -d:)

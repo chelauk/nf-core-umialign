@@ -44,6 +44,7 @@ process PICARD_BAMTOFASTQ {
         INTERLEAVE=true \\
         NON_PF=true
 
+    rm -r ./tmpdir
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         picard: \$(echo \$(picard MarkDuplicates --version 2>&1) | grep -o 'Version:.*' | cut -f2- -d:)

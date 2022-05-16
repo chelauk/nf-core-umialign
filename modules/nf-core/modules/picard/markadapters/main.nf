@@ -42,6 +42,7 @@ process PICARD_MARKADAPTERS {
         O=${prefix}_adapters_marked.bam \\
         M=${prefix}_markadapter.metrics
 
+    rm -r tmpdir
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         picard: \$(echo \$(picard MarkIlluminaAdapters --version 2>&1) | grep -o 'Version:.*' | cut -f2- -d:)
