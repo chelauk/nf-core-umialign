@@ -19,6 +19,7 @@ process PICARD_ESTIMATELIBRARYCOMPLEXITY {
 
     script:
     def args = task.ext.args ?: ''
+    def max_records = task.memory.toGiga() * 250000
     def prefix = task.ext.prefix ?: "${meta.id}"
     def avail_mem = 3
     if (!task.memory) {
@@ -32,12 +33,14 @@ process PICARD_ESTIMATELIBRARYCOMPLEXITY {
     picard \\
         -Xmx${avail_mem}g \\
         EstimateLibraryComplexity \\
+        MAX_RECORDS_IN_RAM=${max_records} \\
         TMP_DIR=./tmpdir \
         $args \\
         INPUT=$bam \\
         BARCODE_TAG=RX \\
         OUTPUT=${prefix}_library_complexity.txt
 
+    rm -r ./tmpdir
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         picard: \$(echo \$(picard EstimateLibraryComplexity --version 2>&1) | grep -o 'Version:.*' | cut -f2- -d:)

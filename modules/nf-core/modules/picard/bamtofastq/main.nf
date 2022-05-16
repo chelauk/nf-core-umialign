@@ -16,10 +16,11 @@ process PICARD_BAMTOFASTQ {
 
     when:
     task.ext.when == null || task.ext.when
-
+    // A rule of thumb for reads of ~100bp is to set MAX_RECORDS_IN_RAM to be 250,000 reads per each GB given 
+    // to the -Xmx parameter for SortSam. 
     script:
     def args = task.ext.args ?: ''
-    def max_records = task.memory.toGiga() * 100000
+    def max_records = task.memory.toGiga() * 250000
     def prefix = task.ext.prefix ?: "${meta.id}"
     def avail_mem = 3
     if (!task.memory) {
@@ -43,6 +44,7 @@ process PICARD_BAMTOFASTQ {
         INTERLEAVE=true \\
         NON_PF=true
 
+    rm -r ./tmpdir
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         picard: \$(echo \$(picard MarkDuplicates --version 2>&1) | grep -o 'Version:.*' | cut -f2- -d:)

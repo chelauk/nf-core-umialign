@@ -1,6 +1,6 @@
 process FGBIO_CALLMOLECULARCONSENSUSREADS {
     tag "$meta.id"
-    label 'process_long'
+    label 'eight_cpus'
 
     conda (params.enable_conda ? "bioconda::fgbio=2.0.0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -23,7 +23,9 @@ process FGBIO_CALLMOLECULARCONSENSUSREADS {
     """
     [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
 
-    fgbio -Xmx${task.memory.toGiga()}g --tmp-dir=./tmpdir \\
+    fgbio -Xmx${task.memory.toGiga()}g \\
+        -XX:+AggressiveOpts -XX:+AggressiveHeap \\
+        --tmp-dir=./tmpdir \\
         CallMolecularConsensusReads \\
         -i $bam \\
         --min-input-base-quality 30 \\

@@ -42,6 +42,7 @@ process PICARD_COLLECTHSMETRICS {
         BAIT_INTERVALS=$target_intervals \\
         TARGET_INTERVALS=$target_intervals 
     
+    rm -r ./tmdir
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         picard: \$(echo \$(picard CollectHsMetrics --version 2>&1) | grep -o 'Version:.*' | cut -f2- -d:)

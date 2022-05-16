@@ -1,6 +1,6 @@
 process PICARD_MARKADAPTERS {
     tag "$meta.id"
-    label 'process_low'
+    label '4_cpus'
 
     conda (params.enable_conda ? "bioconda::picard=2.26.10" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -23,7 +23,7 @@ process PICARD_MARKADAPTERS {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def avail_mem = 3
-    def max_records = task.memory.toGiga() * 100000
+    def max_records = task.memory.toGiga() * 250000
     if (!task.memory) {
         log.info '[Picard MarkIlluminaAdapters] Available memory not known - defaulting to 3GB. Specify process memory requirements to change this.'
     } else {
@@ -42,6 +42,7 @@ process PICARD_MARKADAPTERS {
         O=${prefix}_adapters_marked.bam \\
         M=${prefix}_markadapter.metrics
 
+    rm -r tmpdir
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         picard: \$(echo \$(picard MarkIlluminaAdapters --version 2>&1) | grep -o 'Version:.*' | cut -f2- -d:)

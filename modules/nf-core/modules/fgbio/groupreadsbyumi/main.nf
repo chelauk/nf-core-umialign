@@ -27,6 +27,7 @@ process FGBIO_GROUPREADSBYUMI {
     
     fgbio \\
         -Xmx${task.memory.toGiga()}g \\
+        -XX:+AggressiveOpts -XX:+AggressiveHeap \\
         --tmp-dir=./tmpdir \\
         GroupReadsByUmi \\
         $args \\
