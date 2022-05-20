@@ -1,6 +1,6 @@
 process FGBIO_GROUPREADSBYUMI {
     tag "$meta.id"
-    label 'process_low'
+    label 'process_low_long'
 
     conda (params.enable_conda ? "bioconda::fgbio=2.0.0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
