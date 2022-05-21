@@ -34,7 +34,7 @@ process FGBIO_CALLMOLECULARCONSENSUSREADS {
         $args \\
         -o ${prefix}.bam
     
-    rm -r ./tmpdir
+    rm -rf./tmpdir
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -35,7 +35,7 @@ process FGBIO_GROUPREADSBYUMI {
         -o ${prefix}_umi-grouped.bam \\
         -f ${prefix}_umi_histogram.txt
     
-    rm -r ./tmpdir
+    rm -rf./tmpdir
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

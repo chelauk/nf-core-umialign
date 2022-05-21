@@ -39,7 +39,7 @@ process FGBIO_FILTERCONSENSUSREADS {
         --sort-order queryname \\
         -o ${prefix}_filt.bam
     
-    rm -r ./tmpdir
+    rm -rf./tmpdir
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

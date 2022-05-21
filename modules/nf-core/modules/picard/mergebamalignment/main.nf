@@ -47,7 +47,7 @@ process PICARD_MERGEBAMALIGNMENT {
         ATTRIBUTES_TO_RETAIN=XS \\
         OUTPUT=${prefix}.bam
     
-    rm -r ./tmpdir
+    rm -rf./tmpdir
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         picard: \$( echo \$(picard MergeBamAlignment --version 2>&1) | grep -o 'Version:.*' | cut -f2- -d:)

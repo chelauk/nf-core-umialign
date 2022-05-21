@@ -40,7 +40,7 @@ process FGBIO_FASTQTOBAM {
         --sample ${meta.patient}_${meta.sample} \\
         --library ${meta.patient}_${meta.sample}
     
-    rm -r  ./tmpdir
+    rm -rf ./tmpdir
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
