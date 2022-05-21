@@ -40,7 +40,6 @@ process PICARD_ESTIMATELIBRARYCOMPLEXITY {
         BARCODE_TAG=RX \\
         OUTPUT=${prefix}_library_complexity.txt
 
-    rm -rf./tmpdir
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         picard: \$(echo \$(picard EstimateLibraryComplexity --version 2>&1) | grep -o 'Version:.*' | cut -f2- -d:)

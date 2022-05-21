@@ -38,8 +38,6 @@ process FGBIO_FILTERCONSENSUSREADS {
         --reverse-per-base-tags true \\
         --sort-order queryname \\
         -o ${prefix}_filt.bam
-    
-    rm -rf./tmpdir
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

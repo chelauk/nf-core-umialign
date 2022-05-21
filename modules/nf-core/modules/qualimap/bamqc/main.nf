@@ -47,8 +47,7 @@ process QUALIMAP_BAMQC {
         $collect_pairs \\
         -outdir $prefix \\
         -nt $task.cpus
-    
-    rm -rf./tmpdir 
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         qualimap: \$(echo \$(qualimap 2>&1) | sed 's/^.*QualiMap v.//; s/Built.*\$//')

@@ -39,8 +39,6 @@ process FGBIO_FASTQTOBAM {
         --umi-tag RX \\
         --sample ${meta.patient}_${meta.sample} \\
         --library ${meta.patient}_${meta.sample}
-    
-    rm -rf ./tmpdir
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

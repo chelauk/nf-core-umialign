@@ -41,8 +41,6 @@ process PICARD_COLLECTHSMETRICS {
         O=${prefix}_${args}_collecthsmetrics.txt \\
         BAIT_INTERVALS=$target_intervals \\
         TARGET_INTERVALS=$target_intervals 
-    
-    rm -rf./tmpdir
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
