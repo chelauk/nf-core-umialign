@@ -120,7 +120,7 @@ workflow UMIALIGN {
     // MODULE: Input merged bams before group and call consensus
 
     if ( params.stage == 'two' ) {
-        bam_input1 = extract_csv(csv_file)
+		bam_input1 = extract_csv(csv_file)
         UMI_STAGE_TWO(bam_input1)
         bam_input2  = bam_input2.mix(UMI_STAGE_TWO.out.consensus_bam)
         umi_st_two_family_sizes            = UMI_STAGE_TWO.out.family_sizes.mix(UMI_STAGE_TWO.out.family_sizes)
