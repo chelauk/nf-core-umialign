@@ -71,7 +71,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 
 ## Documentation
 
-The nf-core/umialign pipeline comes with documentation about the pipeline [usage](https://github.com/chelauk/nf-core-umialign/usage)
+The nf-core/umialign pipeline comes with documentation about the pipeline [`usage`](https://github.com/chelauk/nf-core-umialign/blob/master/docs/usage.md)
 
 ## Credits
 
