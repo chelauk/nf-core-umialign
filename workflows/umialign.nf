@@ -107,14 +107,14 @@ workflow UMIALIGN {
 
     if ( params.stage == 'one' ) {
         reads = extract_csv(csv_file)
-    	UMI_STAGE_ONE( PICARD_BED_TO_INTERVAL_LIST.out.intervals, reads,fasta,dict,dbsnp,dbsnp_tbi,bwa )
-    	bam_input1 = bam_input1.mix(UMI_STAGE_ONE.out.merged_bam)
-   		umi_st_one_adapter_metrics       = UMI_STAGE_ONE.out.adapter_metrics.mix(UMI_STAGE_ONE.out.adapter_metrics)
-    	umi_st_one_complexity_metrics    = UMI_STAGE_ONE.out.complexity_metrics.mix(UMI_STAGE_ONE.out.complexity_metrics)
-    	umi_st_one_fastqc_log            = UMI_STAGE_ONE.out.fastqc_log.mix(UMI_STAGE_ONE.out.fastqc_log)
-    	umi_st_one_pre_collapse_error    = UMI_STAGE_ONE.out.pre_collapse_error.mix(UMI_STAGE_ONE.out.pre_collapse_error)
-    	umi_st_one_pre_collapse_metrics  = UMI_STAGE_ONE.out.pre_collapse_metrics.mix(UMI_STAGE_ONE.out.pre_collapse_metrics)
-		ch_versions = ch_versions.mix(UMI_STAGE_ONE.out.versions.first())
+        UMI_STAGE_ONE( PICARD_BED_TO_INTERVAL_LIST.out.intervals, reads,fasta,dict,dbsnp,dbsnp_tbi,bwa )
+        bam_input1 = bam_input1.mix(UMI_STAGE_ONE.out.merged_bam)
+        umi_st_one_adapter_metrics       = UMI_STAGE_ONE.out.adapter_metrics.mix(UMI_STAGE_ONE.out.adapter_metrics)
+        umi_st_one_complexity_metrics    = UMI_STAGE_ONE.out.complexity_metrics.mix(UMI_STAGE_ONE.out.complexity_metrics)
+        umi_st_one_fastqc_log            = UMI_STAGE_ONE.out.fastqc_log.mix(UMI_STAGE_ONE.out.fastqc_log)
+        umi_st_one_pre_collapse_error    = UMI_STAGE_ONE.out.pre_collapse_error.mix(UMI_STAGE_ONE.out.pre_collapse_error)
+        umi_st_one_pre_collapse_metrics  = UMI_STAGE_ONE.out.pre_collapse_metrics.mix(UMI_STAGE_ONE.out.pre_collapse_metrics)
+        ch_versions = ch_versions.mix(UMI_STAGE_ONE.out.versions.first())
     }
 
     // MODULE: Input merged bams before group and call consensus
