@@ -1,12 +1,37 @@
 # nf-core/umialign: Usage
 
-## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/umialign/usage](https://nf-co.re/umialign/usage)
-
-> _Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files._
-
 ## Introduction
 
-<!-- TODO nf-core: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
+This pipeline is designed primarily for three input fastqs (R1(read),R2(umi),R3(read)), which are processed using fgbio tools
+using fgbio tools to calculate consensus and filter umis.  The output is an aligned bam with duplicates marked.
+
+The main parameters are 
+
+--filter_min_reads which determines the minimum family size for the consensus
+--read_structure the default is three input fastqs, if you use a different input, make sure you change the read structure parameter
+
+
+```mermaid
+flowchart TD
+step1(fastqs)
+step1-->step2(fgbio fastq to bam)
+step2-->step3(picard mark_illumina_adapters)
+step3-->step4(picard bam_to_fastq)
+step4-->step5(bwa align)
+step5-->step6(picard_merge_bams)
+step3-->step6
+step6-->step7(fgbio group_reads_by_umi)
+step7-->step8(fgbio sort_bam)
+step8-->step9(fgbio call_consensus)
+step9-->step10(fgbio filter_consensus)
+step10-->step11(picard bam_to_fastq )
+step11-->step12(bwa align)
+step12-->step13(picard_sort)
+step10-->step14(picard_sort)
+step13-->step15(picard_merge_bams)
+step14-->step15
+step15-->step16(picard mark_duplicates)
+```
 
 ## Samplesheet input
 
@@ -20,44 +45,39 @@ You will need to create a samplesheet with information about the samples you wou
 
 The `sample` identifiers have to be the same when you have re-sequenced the same sample more than once e.g. to increase sequencing depth. The pipeline will concatenate the raw reads before performing any downstream analysis. Below is an example for the same sample sequenced across 3 lanes:
 
-```console
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L003_R1_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz
-```
+gender and status are optional lanes.
 
-### Full samplesheet
-
-The pipeline will auto-detect whether a sample is single- or paired-end using the information provided in the samplesheet. The samplesheet can have as many columns as you desire, however, there is a strict requirement for the first 3 columns to match those defined in the table below.
-
-A final samplesheet file consisting of both single- and paired-end data may look something like the one below. This is for 6 samples, where `TREATMENT_REP3` has been sequenced twice.
+in the example the first two lines will be merged into one sample
 
 ```console
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP2,AEG588A2_S2_L002_R1_001.fastq.gz,AEG588A2_S2_L002_R2_001.fastq.gz
-CONTROL_REP3,AEG588A3_S3_L002_R1_001.fastq.gz,AEG588A3_S3_L002_R2_001.fastq.gz
-TREATMENT_REP1,AEG588A4_S4_L003_R1_001.fastq.gz,
-TREATMENT_REP2,AEG588A5_S5_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,
+patient,sample,gender,status,lane,fastq_1,fastq_2,patient_3
+patient1,sample1,1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz,AEG588A1_S1_L002_R3_001.fastq.gz
+patient1,sample1,2,AEG588A1_S1_L003_R1_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz
+patient1,sample2,1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz,AEG588A1_S1_L004_R3_001.fastq.gz
 ```
 
-| Column    | Description                                                                                                                                                                            |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sample`  | Custom sample name. This entry will be identical for multiple sequencing libraries/runs from the same sample. Spaces in sample names are automatically converted to underscores (`_`). |
-| `fastq_1` | Full path to FastQ file for Illumina short reads 1. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
-| `fastq_2` | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
 
-An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
+Alternatively bam files can be input either before the `call consensus` stage
+
+--stage two
+
+Or bam files after the `call consensus/filter consensus` stages
+
+--stage three
+
+```console
+patient,sample,bam
+patient1,sample1,patient1_sample1.bam
+```
+
+
 
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:
 
 ```console
-nextflow run nf-core/umialign --input samplesheet.csv --outdir <OUTDIR> --genome GRCh37 -profile docker
+nextflow run nf-core/umialign --input samplesheet.csv 
 ```
 
 This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
