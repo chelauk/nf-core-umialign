@@ -97,6 +97,7 @@ workflow UMIALIGN {
 	umi_st_three_post_collapse_error   = Channel.empty()
 	umi_st_three_post_collapse_metrics = Channel.empty()
 	umi_st_three_bamqc                 = Channel.empty()
+        umi_st_three_insert_size_metrics   = Channel.empty()
 
 
     // MODULE create interval list with picard
@@ -142,6 +143,7 @@ workflow UMIALIGN {
         umi_st_three_post_collapse_error   =  UMI_STAGE_THREE.out.post_collapse_error.mix(UMI_STAGE_THREE.out.post_collapse_error)
         umi_st_three_post_collapse_metrics =  UMI_STAGE_THREE.out.post_collapse_metrics.mix(UMI_STAGE_THREE.out.post_collapse_metrics)
         umi_st_three_bamqc                 =  UMI_STAGE_THREE.out.bamqc.mix(UMI_STAGE_THREE.out.bamqc)
+        umi_st_three_insert_size_metrics   =  UMI_STAGE_THREE.out..mix(UMI_STAGE_THREE.out.insert_sizes)
         ch_versions = ch_versions.mix(UMI_STAGE_THREE.out.versions.first())
     } else {
         UMI_STAGE_THREE(PICARD_BED_TO_INTERVAL_LIST.out.intervals,bam_input2,fasta,bwa,dict,target_bed,dbsnp,dbsnp_tbi)
@@ -150,6 +152,7 @@ workflow UMIALIGN {
         umi_st_three_post_collapse_error   =  UMI_STAGE_THREE.out.post_collapse_error.mix(UMI_STAGE_THREE.out.post_collapse_error)
         umi_st_three_post_collapse_metrics =  UMI_STAGE_THREE.out.post_collapse_metrics.mix(UMI_STAGE_THREE.out.post_collapse_metrics)
         umi_st_three_bamqc                 =  UMI_STAGE_THREE.out.bamqc.mix(UMI_STAGE_THREE.out.bamqc)
+        umi_st_three_insert_size_metrics   =  UMI_STAGE_THREE.out..mix(UMI_STAGE_THREE.out.insert_sizes)
         ch_versions = ch_versions.mix(UMI_STAGE_THREE.out.versions.first())
     }
 
@@ -178,6 +181,7 @@ workflow UMIALIGN {
     ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_post_collapse_error.unique().collect{it[1]}.ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_post_collapse_metrics.unique().collect{it[1]}.ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_bamqc.unique().collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(umi_st_three_insert_size_metrics.unique().collect{it[1]}.ifEmpty([]))
     MULTIQC (
         ch_multiqc_files.collect()
     )
