@@ -50,7 +50,7 @@ gender and status are optional lanes.
 in the example the first two lines will be merged into one sample
 
 ```console
-patient,sample,gender,status,lane,fastq_1,fastq_2,fastq_3
+patient,sample,lane,fastq_1,fastq_2,fastq_3
 patient1,sample1,1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz,AEG588A1_S1_L002_R3_001.fastq.gz
 patient1,sample1,2,AEG588A1_S1_L003_R1_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz
 patient1,sample2,1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz,AEG588A1_S1_L004_R3_001.fastq.gz
