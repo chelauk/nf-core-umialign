@@ -30,7 +30,7 @@ workflow UMI_STAGE_THREE {
     ch_versions = Channel.empty()
 
     // MODULE: filter consensus reads
-:
+
     FGBIO_FILTERCONSENSUSREADS ( bam,fasta )
     ch_versions = ch_versions.mix(FGBIO_FILTERCONSENSUSREADS.out.versions.first())
 
@@ -78,6 +78,6 @@ workflow UMI_STAGE_THREE {
     post_collapse_metrics = HS2.out.hs_metrics                                // channel: [ val(meta), txt ]
     post_collapse_error   = ER2.out.error_rate                                // channel: [ val(meta), txt ]
     bamqc                 = QUALIMAP_BAMQC.out.results                        // channel: [ val(meta), folder ]
-    insert_sizes          = PICARD_COLLECTINSERTSIZEMETRICS.out.sizmetrics    // channel: [ val(meta), txt ]
+    insert_sizes          = PICARD_COLLECTINSERTSIZEMETRICS.out.size_metrics  // channel: [ val(meta), txt ]
     versions              = ch_versions                                       // channel: [ versions.yml ]
 }

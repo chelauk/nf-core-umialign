@@ -143,7 +143,7 @@ workflow UMIALIGN {
         umi_st_three_post_collapse_error   =  UMI_STAGE_THREE.out.post_collapse_error.mix(UMI_STAGE_THREE.out.post_collapse_error)
         umi_st_three_post_collapse_metrics =  UMI_STAGE_THREE.out.post_collapse_metrics.mix(UMI_STAGE_THREE.out.post_collapse_metrics)
         umi_st_three_bamqc                 =  UMI_STAGE_THREE.out.bamqc.mix(UMI_STAGE_THREE.out.bamqc)
-        umi_st_three_insert_size_metrics   =  UMI_STAGE_THREE.out..mix(UMI_STAGE_THREE.out.insert_sizes)
+        umi_st_three_insert_size_metrics   =  UMI_STAGE_THREE.out.insert_sizes.mix(UMI_STAGE_THREE.out.insert_sizes)
         ch_versions = ch_versions.mix(UMI_STAGE_THREE.out.versions.first())
     } else {
         UMI_STAGE_THREE(PICARD_BED_TO_INTERVAL_LIST.out.intervals,bam_input2,fasta,bwa,dict,target_bed,dbsnp,dbsnp_tbi)
@@ -152,7 +152,7 @@ workflow UMIALIGN {
         umi_st_three_post_collapse_error   =  UMI_STAGE_THREE.out.post_collapse_error.mix(UMI_STAGE_THREE.out.post_collapse_error)
         umi_st_three_post_collapse_metrics =  UMI_STAGE_THREE.out.post_collapse_metrics.mix(UMI_STAGE_THREE.out.post_collapse_metrics)
         umi_st_three_bamqc                 =  UMI_STAGE_THREE.out.bamqc.mix(UMI_STAGE_THREE.out.bamqc)
-        umi_st_three_insert_size_metrics   =  UMI_STAGE_THREE.out..mix(UMI_STAGE_THREE.out.insert_sizes)
+        umi_st_three_insert_size_metrics   =  UMI_STAGE_THREE.out.insert_sizes.mix(UMI_STAGE_THREE.out.insert_sizes)
         ch_versions = ch_versions.mix(UMI_STAGE_THREE.out.versions.first())
     }
 

@@ -1,4 +1,4 @@
-process PICARD_COLLECINSERTSIZEMETRICS {
+process PICARD_COLLECTINSERTSIZEMETRICS {
     tag "$meta.id"
     label 'process_long'
 
@@ -32,8 +32,9 @@ process PICARD_COLLECINSERTSIZEMETRICS {
     picard \\
     CollectInsertSizeMetrics \\
     I=$bam \\
-    O="${prefix}_${args}".insert_sizes.txt \\
-    HISTOGRAM_WIDTH="${args}" \\
+    O=${prefix}_${args}.insert_sizes.txt \\
+    H=${prefix}_${args}.insert_sizes.pdf \\
+    HISTOGRAM_WIDTH=${args} \\
     M=0.5
 
     cat <<-END_VERSIONS > versions.yml
