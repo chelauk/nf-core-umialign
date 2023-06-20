@@ -11,6 +11,7 @@ include { PICARD_MERGEBAMALIGNMENT as PMB2  } from '../../../modules/nf-core/mod
 include { PICARD_COLLECTHSMETRICS as HS2    } from '../../../modules/nf-core/modules/picard/collecthsmetrics/main'
 include { FGBIO_ERROR_RATE as ER2           } from '../../../modules/nf-core/modules/fgbio/errorrate/main'
 include { PICARD_UMIMARKDUPLICATES          } from '../../../modules/nf-core/modules/picard/umimarkduplicates/main'
+include { PICARD_COLLECTINSERTSIZEMETRICS   } from '../../../modules/nf-core/modules/picard/collectinsertsizemetrics/main'
 include { QUALIMAP_BAMQC                    } from '../../../modules/nf-core/modules/qualimap/bamqc/main'
 
 workflow UMI_STAGE_THREE {
@@ -60,6 +61,11 @@ workflow UMI_STAGE_THREE {
 
     PICARD_UMIMARKDUPLICATES ( PMB2.out.bam )
     ch_versions = ch_versions.mix(PICARD_UMIMARKDUPLICATES.out.versions.first())
+    
+   // MODULE: PICARD collect insert size metrics
+
+    PICARD_COLLECTINSERTSIZEMETRICS  ( PMB2.out.bam )
+    ch_versions = ch_versions.mix(PICARD_COLLECTINSERTSIZEMETRICS.out.versions.first())
 
     // MODULE: Qualimap BamQC
 
@@ -67,11 +73,11 @@ workflow UMI_STAGE_THREE {
     ch_versions = ch_versions.mix(QUALIMAP_BAMQC.out.versions.first())
 
     emit:
-    md_umi_metrics        = PICARD_UMIMARKDUPLICATES.out.umi_metrics       // channel: [ val(meta), txt ]
-    md_metrics            = PICARD_UMIMARKDUPLICATES.out.md_metrics        // channel: [ val(meta), txt ]
-    post_collapse_metrics = HS2.out.hs_metrics                             // channel: [ val(meta), txt ]
-    post_collapse_error   = ER2.out.error_rate                             // channel: [ val(meta), txt ]
-    bamqc                 = QUALIMAP_BAMQC.out.results                     // channel: [ val(meta), folder ]
-
-    versions              = ch_versions                                      // channel: [ versions.yml ]
+    md_umi_metrics        = PICARD_UMIMARKDUPLICATES.out.umi_metrics          // channel: [ val(meta), txt ]
+    md_metrics            = PICARD_UMIMARKDUPLICATES.out.md_metrics           // channel: [ val(meta), txt ]
+    post_collapse_metrics = HS2.out.hs_metrics                                // channel: [ val(meta), txt ]
+    post_collapse_error   = ER2.out.error_rate                                // channel: [ val(meta), txt ]
+    bamqc                 = QUALIMAP_BAMQC.out.results                        // channel: [ val(meta), folder ]
+    insert_sizes          = PICARD_COLLECTINSERTSIZEMETRICS.out.size_metrics  // channel: [ val(meta), txt ]
+    versions              = ch_versions                                       // channel: [ versions.yml ]
 }
