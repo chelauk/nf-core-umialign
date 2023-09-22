@@ -41,7 +41,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 17. Check post-collapse error-rates ([`fgbio`](https://http://fulcrumgenomics.github.io/fgbio/))
 18. Use umi-aware mark-duplicates ([`Picard`](http://broadinstitute.github.io/picard/))
 19. Run Qualimap bamqc ([`Qualimap`](http://qualimap.conesalab.org/))
-20. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+20. Collate QC ([`MultiQC`](http://multiqc.info/))
 
 ## Quick Start
 
