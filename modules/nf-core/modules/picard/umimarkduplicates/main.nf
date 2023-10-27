@@ -11,7 +11,7 @@ process PICARD_UMIMARKDUPLICATES {
     tuple val(meta), path(bam)
 
     output:
-    tuple val(meta), path("*umi_aware_md.bam")        , emit: bam
+    tuple val(meta), path("*umi_md.bam")        , emit: bam
     tuple val(meta), path("*.bai")                    , optional:true, emit: bai
     tuple val(meta), path("*umi.metrics")             , emit: umi_metrics
     tuple val(meta), path("*duplicate.metrics")       , emit: md_metrics
@@ -38,9 +38,9 @@ process PICARD_UMIMARKDUPLICATES {
         TMP_DIR=./tmpdir \\
         INPUT=$bam \\
         $args \\
-        OUTPUT=${prefix}_umi_aware_md.bam \\
+        OUTPUT=${prefix}_umi_md.bam \\
         ASSUME_SORT_ORDER=coordinate \\
-        METRICS_FILE=${prefix}_duplicate.metrics \\
+        METRICS_FILE=${prefix}_umi_duplicate.metrics \\
         UMI_METRICS_FILE=${prefix}_umi.metrics \\
         CREATE_INDEX=true
 
@@ -59,9 +59,9 @@ process PICARD_UMIMARKDUPLICATES {
         avail_mem = task.memory.giga
     }
     """
-    touch ${prefix}_umi_aware_md.bam
-    touch ${prefix}_umi_aware_md.bai
-    touch ${prefix}_duplicate.metrics
+    touch ${prefix}_umi_md.bam
+    touch ${prefix}_umi_md.bai
+    touch ${prefix}_umi_duplicate.metrics
     touch ${prefix}_umi.metrics
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
