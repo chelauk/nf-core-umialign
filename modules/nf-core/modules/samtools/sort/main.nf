@@ -36,7 +36,7 @@ process SAMTOOLS_SORT {
         -@ $task.cpus \\
         -o ${prefix}.marked_namesorted.bam \\
         -T $prefix \\
-        $aligned_unmarked_bam
+        $unaligned_unmarked_bam
     
 
     cat <<-END_VERSIONS > versions.yml
