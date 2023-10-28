@@ -7,7 +7,9 @@
 include { FGBIO_FILTERCONSENSUSREADS        } from '../../../modules/nf-core/modules/fgbio/filterconsensus/main'
 include { PICARD_BAMTOFASTQ as B2FQ2        } from '../../../modules/nf-core/modules/picard/bamtofastq/main'
 include { BWA_MEM as BM2                    } from '../../../modules/nf-core/modules/bwa/mem/main'
-include { SAMTOOLS_SORT                     } from '../../../modules/nf-core/modules/samtools/sort/main'
+//include { SAMTOOLS_SORT                     } from '../../../modules/nf-core/modules/samtools/sort/main'
+include { PICARD_SORTSAM as UNALIGNED_SORT  } from '../../../modules/nf-core/modules/picard/sortsam/main'
+include { PICARD_SORTSAM as ALIGNED_SORT    } from '../../../modules/nf-core/modules/picard/sortsam/main'
 include { PICARD_MERGEBAMALIGNMENT as PMB2  } from '../../../modules/nf-core/modules/picard/mergebamalignment/main'
 include { PICARD_COLLECTHSMETRICS as HS2    } from '../../../modules/nf-core/modules/picard/collecthsmetrics/main'
 include { FGBIO_ERROR_RATE as ER2           } from '../../../modules/nf-core/modules/fgbio/errorrate/main'
@@ -45,11 +47,21 @@ workflow UMI_STAGE_THREE {
     BM2 ( B2FQ2.out.fastq,bwa,sort )
 
     // MODULE: sort before merge
-    SAMTOOLS_SORT(BM2.out.bam.join(FGBIO_FILTERCONSENSUSREADS.out.bam))
-    ch_versions = ch_versions.mix(SAMTOOLS_SORT.out.versions.first())
+    // SAMTOOLS_SORT(BM2.out.bam.join(FGBIO_FILTERCONSENSUSREADS.out.bam))
+    // ch_versions = ch_versions.mix(SAMTOOLS_SORT.out.versions.first())
 
+    // MODULE: sort before merge
+    aligned_suffix= "aligned_namesorted"
+    ALIGNED_SORT(BM2.out.bam, aligned_suffix)
+    ch_versions = ch_versions.mix(ALIGNED_SORT.out.versions.first())
+
+
+    // MODULE: sort before merge
+    unaligned_suffix= "unaligned_namesorted"
+    UNALIGNED_SORT(FGBIO_FILTERCONSENSUSREADS.out.bam,unaligned_suffix)
+    
     // MODULE: picard mergebamalignment
-    PMB2(SAMTOOLS_SORT.out.bam,fasta,dict)
+    PMB2(ALIGNED_SORT.out.bam.join(FGBIO_FILTERCONSENSUSREADS.out.bam),fasta,dict)
     ch_versions = ch_versions.mix(PMB2.out.versions.first())
 
     // MODULE : Picard collect hs metrics after collapse
