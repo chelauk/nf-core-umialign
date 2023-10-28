@@ -31,9 +31,12 @@ process PICARD_SORTSAM {
     if ("$bam" == "${prefix}.${suffix}.bam") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
 
     """
+    [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"
+
     picard \\
         SortSam \\
         -Xmx${avail_mem}M \\
+        --TMP_DIR ./tmpdir \\
         --INPUT $bam \\
         --OUTPUT ${prefix}.${suffix}.bam \\
         --SORT_ORDER queryname
