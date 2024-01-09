@@ -20,14 +20,14 @@ process PICARD_MERGEBAMALIGNMENT {
     task.ext.when == null || task.ext.when
 
     script:
-    def max_records = task.memory.toGiga() * 250000
+    def max_records = task.memory.toGiga() * 200000
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def avail_mem = 3
     if (!task.memory) {
         log.info '[Picard MergeBamAlignment] Available memory not known - defaulting to 3GB. Specify process memory requirements to change this.'
     } else {
-        avail_mem = task.memory.giga
+        avail_mem = task.memory.giga - 2
     }
     """
     [ ! -d "./tmpdir" ] && mkdir ./tmpdir || echo "./tmpdir exists"

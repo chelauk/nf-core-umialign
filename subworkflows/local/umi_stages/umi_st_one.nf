@@ -14,6 +14,8 @@ include { PICARD_ESTIMATELIBRARYCOMPLEXITY  } from '../../../modules/nf-core/mod
 include { PICARD_MARKADAPTERS               } from '../../../modules/nf-core/modules/picard/markadapters/main'
 include { PICARD_BAMTOFASTQ as B2FQ1        } from '../../../modules/nf-core/modules/picard/bamtofastq/main'
 include { BWA_MEM as BM1                    } from '../../../modules/nf-core/modules/bwa/mem/main'
+include { PICARD_SORTSAM as ALIGNED_SORT1   } from '../../../modules/nf-core/modules/picard/sortsam/main' 
+include { PICARD_SORTSAM as UNALIGNED_SORT1 } from '../../../modules/nf-core/modules/picard/sortsam/main' 
 include { PICARD_MERGEBAMALIGNMENT as PMB1  } from '../../../modules/nf-core/modules/picard/mergebamalignment/main'
 include { PICARD_COLLECTHSMETRICS as HS1    } from '../../../modules/nf-core/modules/picard/collecthsmetrics/main'
 include { FGBIO_ERROR_RATE as ER1           } from '../../../modules/nf-core/modules/fgbio/errorrate/main'
@@ -67,9 +69,16 @@ workflow UMI_STAGE_ONE {
     BM1 ( B2FQ1.out.fastq,bwa,sort )
     ch_versions = ch_versions.mix(BM1.out.versions.first())
 
+    // MODULE: sort before merge
+    aligned_suffix= "aligned_namesorted"
+    ALIGNED_SORT1(BM1.out.bam, aligned_suffix)
+
+    // MODULE: sort before merge
+    unaligned_suffix= "unaligned_namesorted"
+    UNALIGNED_SORT1(PICARD_MARKADAPTERS.out.bam,unaligned_suffix)
+    
     // MODULE: merge adapter marked unaligned bam to aligned bam
-    pmb1_input = BM1.out.bam.join(PICARD_MARKADAPTERS.out.bam)
-    PMB1 ( pmb1_input,fasta,dict )
+    PMB1 ( ALIGNED_SORT1.out.bam.join(UNALIGNED_SORT1.out.bam),fasta,dict )
     ch_versions = ch_versions.mix(PMB1.out.versions.first())
 
     // SUBWORKFLOW: merge bams if necessary
