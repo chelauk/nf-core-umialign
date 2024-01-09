@@ -61,7 +61,7 @@ workflow UMI_STAGE_THREE {
     UNALIGNED_SORT(FGBIO_FILTERCONSENSUSREADS.out.bam,unaligned_suffix)
     
     // MODULE: picard mergebamalignment
-    PMB2(ALIGNED_SORT.out.bam.join(FGBIO_FILTERCONSENSUSREADS.out.bam),fasta,dict)
+    PMB2(ALIGNED_SORT.out.bam.join(UNALIGNED_SORT.out.bam),fasta,dict)
     ch_versions = ch_versions.mix(PMB2.out.versions.first())
 
     // MODULE : Picard collect hs metrics after collapse
