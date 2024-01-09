@@ -15,6 +15,7 @@ include { PICARD_COLLECTHSMETRICS as HS2    } from '../../../modules/nf-core/mod
 include { FGBIO_ERROR_RATE as ER2           } from '../../../modules/nf-core/modules/fgbio/errorrate/main'
 include { PICARD_UMIMARKDUPLICATES          } from '../../../modules/nf-core/modules/picard/umimarkduplicates/main'
 include { PICARD_COLLECTINSERTSIZEMETRICS   } from '../../../modules/nf-core/modules/picard/collectinsertsizemetrics/main'
+include { PICARD_VALIDATESAMFILE            } from '../../../modules/nf-core/modules/picard/validatesamfile/main'
 include { QUALIMAP_BAMQC                    } from '../../../modules/nf-core/modules/qualimap/bamqc/main'
 
 workflow UMI_STAGE_THREE {
@@ -83,6 +84,10 @@ workflow UMI_STAGE_THREE {
 
     PICARD_COLLECTINSERTSIZEMETRICS  ( PMB2.out.bam )
     ch_versions = ch_versions.mix(PICARD_COLLECTINSERTSIZEMETRICS.out.versions.first())
+
+    // MODULE: Validate sam file
+
+    PICARD_VALIDATESAMFILE ( PMB2.out.bam )
 
     // MODULE: Qualimap BamQC
 
