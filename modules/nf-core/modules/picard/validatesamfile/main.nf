@@ -11,7 +11,7 @@ process PICARD_VALIDATESAMFILE {
     tuple val(meta), path(bam)
 
     output:
-    tuple val(meta), path("*.fastq.gz")   , emit: bam
+    tuple val(meta), path("*.txt")        , emit: bam
     path  "versions.yml"                  , emit: versions
 
     when:
